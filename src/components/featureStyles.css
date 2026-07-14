@@ -81,31 +81,34 @@
 .empty-checkin-steps { display: flex; gap: 8px; margin-bottom: 20px; }
 .empty-checkin-steps span { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 7px 10px; color: #475467; font-size: 10px; }
 
-.lottery-hero { display: grid; grid-template-columns: 58px minmax(0, 1fr) auto; gap: 15px; align-items: center; background: #fff; border: 1px solid var(--line); border-top: 3px solid #d99b12; border-radius: 8px; padding: 20px; box-shadow: var(--shadow); }
-.lottery-prize-icon { width: 58px; height: 58px; display: grid; place-items: center; border-radius: 9px; color: #9a6700; background: #fff8e8; }
+.lottery-page > *, .lottery-hero, .lottery-metrics, .winner-panel { min-width: 0; }
+.lottery-prize-copy, .lottery-actions, .lottery-metrics article, .latest-winners article { min-width: 0; }
+.lottery-hero { display: grid; grid-template-columns: 58px minmax(0, 1fr) auto; gap: 15px; align-items: center; background: #fff; border: 1px solid var(--line); border-top: 3px solid var(--blue); border-radius: 8px; padding: 20px; box-shadow: var(--shadow); }
+.lottery-prize-icon { width: 58px; height: 58px; display: grid; place-items: center; border-radius: 8px; color: var(--blue); background: var(--blue-soft); }
 .lottery-prize-copy { display: grid; gap: 4px; }
-.lottery-prize-copy span { color: #9a6700; font-size: 9px; font-weight: 900; }
+.lottery-prize-copy span { color: var(--blue); font-size: 9px; font-weight: 900; }
 .lottery-prize-copy h2 { font-size: 20px; }
 .lottery-prize-copy p { color: var(--muted); font-size: 10px; }
 .lottery-actions { display: flex; gap: 8px; }
 .lottery-actions button { display: inline-flex; align-items: center; gap: 7px; }
-.lottery-draw-button { border: 1px solid #b7791f; border-radius: 6px; background: #b7791f; color: #fff; padding: 9px 13px; font-size: 11px; font-weight: 800; }
+.lottery-draw-button { border: 1px solid var(--blue); border-radius: 6px; background: var(--blue); color: #fff; padding: 9px 13px; font-size: 11px; font-weight: 800; }
+.lottery-draw-button:hover:not(:disabled) { border-color: var(--blue-strong); background: var(--blue-strong); }
 .lottery-draw-button:disabled { opacity: .45; cursor: not-allowed; }
 .lottery-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
 .lottery-metrics article { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; display: grid; gap: 3px; }
 .lottery-metrics span, .lottery-metrics small { color: var(--muted); font-size: 9px; }
 .lottery-metrics strong { font-size: 24px; }
 .winner-panel { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 18px; box-shadow: var(--shadow); }
-.latest-winners { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; padding: 13px; margin-bottom: 13px; border-radius: 7px; background: #fffaf0; border: 1px solid #f3dfaf; }
-.latest-winners > span { grid-column: 1 / -1; color: #9a6700; font-size: 9px; font-weight: 900; }
-.latest-winners article { display: grid; grid-template-columns: 36px 1fr auto; align-items: center; gap: 9px; background: #fff; border: 1px solid #f1d999; border-radius: 7px; padding: 10px; }
-.winner-avatar { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; background: #fff2c7; color: #8a5900; font-weight: 900; }
+.latest-winners { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; padding: 13px; margin-bottom: 13px; border-radius: 7px; background: #f7faff; border: 1px solid #cfe0ff; }
+.latest-winners > span { grid-column: 1 / -1; color: var(--blue); font-size: 9px; font-weight: 900; }
+.latest-winners article { display: grid; grid-template-columns: 36px 1fr auto; align-items: center; gap: 9px; background: #fff; border: 1px solid #d7e3f7; border-radius: 7px; padding: 10px; }
+.winner-avatar { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 7px; background: var(--blue-soft); color: var(--blue-strong); font-weight: 900; }
 .latest-winners article div:nth-child(2) { display: grid; gap: 2px; }
 .latest-winners strong { font-size: 11px; }
 .latest-winners small { color: var(--muted); font-size: 9px; }
 .latest-winners svg { color: var(--green); }
 .empty-lottery { min-height: 220px; display: grid; place-content: center; justify-items: center; gap: 7px; color: var(--muted); text-align: center; }
-.empty-lottery svg { color: #b7791f; }
+.empty-lottery svg { color: var(--blue); }
 .empty-lottery strong { color: var(--ink); font-size: 14px; }
 .empty-lottery span { font-size: 10px; }
 
