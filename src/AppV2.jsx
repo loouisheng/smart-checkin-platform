@@ -155,7 +155,7 @@ export default function AppV2() {
   else if (activePage === "seating" && activeEvent.modules.seating) content = <SeatingPage people={people} event={activeEvent} records={records} language={language} t={t} />;
   else if (activePage === "benefits" && activeEvent.modules.earlyBird) content = <BenefitsPage people={people} event={activeEvent} template={template} records={records} benefitRecords={benefitRecords} elapsedMinutes={elapsedMinutes} onIssue={issueBenefit} language={language} t={t} />;
   else if (activePage === "lottery" && activeEvent.modules.lottery) content = <LotteryPage event={activeEvent} people={people} records={records} lotteryState={lotteryState} onDraw={runLottery} onReset={resetLottery} onSimulate={simulateLotteryAttendance} language={language} />;
-  else if (activePage === "reports") content = <ReportsPage stats={stats} event={activeEvent} language={language} t={t} />;
+  else if (activePage === "reports") content = <ReportsPage stats={stats} event={activeEvent} people={people} records={records} template={template} elapsedMinutes={elapsedMinutes} language={language} t={t} />;
   else content = <CheckinPage activeEvent={activeEvent} template={template} language={language} t={t} people={people} records={records} elapsedMinutes={elapsedMinutes} setElapsedMinutes={setElapsedMinutes} inputValue={inputValue} setInputValue={setInputValue} onScan={scan} result={result} />;
 
   return <div className="app-shell">

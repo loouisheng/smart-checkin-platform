@@ -64,9 +64,57 @@ export function BenefitsPage({ people, event, template, records, benefitRecords,
   </div>;
 }
 
-export function ReportsPage({ stats, event, language, t }) {
-  const cards = [[language === "zh" ? "已報到" : "Arrived", stats.arrived, Users], [language === "zh" ? "需處理" : "Needs action", stats.unresolved, ShieldCheck], [language === "zh" ? "現場空位" : "On-site seats", stats.openSeats, CalendarDays], [language === "zh" ? "可候補名額" : "Waitlist slots", event.capacityLimited && event.registrationFull ? stats.waitlistSlots : "—", CheckCircle2]];
-  return <div className="page-stack"><PageIntro eyebrow="OPERATIONS" title={t("reportsTitle")} description={t("reportsDesc")} /><div className="report-grid">{cards.map(([label, value, Icon]) => <article key={label}><Icon size={21} /><span>{label}</span><strong>{value}</strong><small>{language === "zh" ? "即時活動指標" : "Live event metric"}</small></article>)}</div></div>;
+export function ReportsPage({ stats, event, people, records, template, elapsedMinutes, language, t }) {
+  const isZh = language === "zh";
+  const waitlistEnabled = template.modules.includes("waitlist");
+  const waitlistValue = waitlistEnabled ? (stats.waitlistSlots == null ? (isZh ? "不限" : "Open") : stats.waitlistSlots) : "—";
+  const cards = [
+    [isZh ? "已報到" : "Arrived", stats.arrived, Users],
+    [isZh ? "需處理" : "Needs action", stats.unresolved, ShieldCheck],
+    [isZh ? "現場空位" : "On-site seats", stats.openSeats, CalendarDays],
+    [isZh ? "可候補名額" : "Waitlist slots", waitlistValue, CheckCircle2],
+  ];
+  const statusCounts = people.reduce((counts, person) => {
+    const status = getAttendanceStatus({ person, event, template, elapsedMinutes, records }).status;
+    counts[status] = (counts[status] || 0) + 1;
+    return counts;
+  }, {});
+  const statusRows = [
+    ["complete", isZh ? "完成" : "Complete"],
+    ["checkedIn", isZh ? "已簽到" : "Checked in"],
+    ["late", isZh ? "遲到" : "Late"],
+    ["absent", isZh ? "未到" : "Absent"],
+    ["pending", isZh ? "待報到" : "Pending"],
+    ["earlyLeave", isZh ? "早退" : "Early leave"],
+  ];
+  const totalPeople = Math.max(people.length, 1);
+  const utilization = event.capacity > 0 ? Math.min(100, Math.round((stats.arrived / event.capacity) * 100)) : 0;
+  const releaseAt = template.rules.waitlistReleaseMin ?? 30;
+  let waitlistState = isZh ? "候補模組未啟用" : "Waitlist disabled";
+  if (waitlistEnabled && !event.capacityLimited) waitlistState = isZh ? "不限量，可直接候補" : "Open waitlist without a capacity limit";
+  else if (waitlistEnabled && !event.registrationFull) waitlistState = isZh ? "尚有原始空位，可直接候補" : "Original seats remain; waitlist is open";
+  else if (waitlistEnabled && elapsedMinutes >= releaseAt) waitlistState = isZh ? `已於開始後 ${releaseAt} 分鐘開放` : `Opened ${releaseAt} minutes after start`;
+  else if (waitlistEnabled) waitlistState = isZh ? `開始後 ${releaseAt} 分鐘開放` : `Opens ${releaseAt} minutes after start`;
+
+  return <div className="page-stack">
+    <PageIntro eyebrow="OPERATIONS" title={t("reportsTitle")} description={t("reportsDesc")} />
+    <div className="report-grid">{cards.map(([label, value, Icon]) => <article key={label}><Icon size={21} /><span>{label}</span><strong>{value}</strong><small>{isZh ? "即時活動指標" : "Live event metric"}</small></article>)}</div>
+    <div className="report-visual-grid">
+      <section className="data-panel chart-panel">
+        <div className="chart-panel-header"><div><span className="section-kicker">ATTENDANCE STATUS</span><h2>{isZh ? "出勤狀態分布" : "Attendance distribution"}</h2></div><small>{isZh ? `名單共 ${people.length} 人` : `${people.length} people`}</small></div>
+        <div className="status-chart">{statusRows.map(([status, label]) => {
+          const value = statusCounts[status] || 0;
+          return <div className="status-bar-row" key={status}><span>{label}</span><div className="status-bar-track"><span className={`status-bar-fill chart-${status}`} style={{ width: `${(value / totalPeople) * 100}%` }} /></div><strong>{value}</strong></div>;
+        })}</div>
+      </section>
+      <section className="data-panel chart-panel">
+        <div className="chart-panel-header"><div><span className="section-kicker">CAPACITY & WAITLIST</span><h2>{isZh ? "容量與候補狀態" : "Capacity and waitlist"}</h2></div><strong className="utilization-value">{utilization}%</strong></div>
+        <div className="capacity-chart"><div className="capacity-track"><span style={{ width: `${utilization}%` }} /></div><div className="capacity-scale"><span>0</span><span>{event.capacity}</span></div></div>
+        <div className="capacity-metrics"><div><span>{isZh ? "已入場" : "Arrived"}</span><strong>{stats.arrived}</strong></div><div><span>{isZh ? "剩餘空位" : "Open seats"}</span><strong>{stats.openSeats}</strong></div><div><span>{isZh ? "可候補" : "Waitlist"}</span><strong>{waitlistValue}</strong></div></div>
+        <div className={`waitlist-state ${waitlistEnabled ? "enabled" : ""}`}><Clock3 size={16} /><div><span>{isZh ? "候補規則" : "Waitlist rule"}</span><strong>{waitlistState}</strong></div></div>
+      </section>
+    </div>
+  </div>;
 }
 
 export function SettingsPage({ event, template, language, t }) {

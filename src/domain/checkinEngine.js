@@ -1,4 +1,4 @@
-﻿function minuteValue(value) {
+function minuteValue(value) {
   return typeof value === "number" ? value : value?.elapsedMinutes;
 }
 
@@ -29,7 +29,7 @@ export function getAttendanceStatus({ person, event, template, elapsedMinutes, r
     return { status: "pending", reason: "WAITING_FOR_CHECKIN" };
   }
 
-  const isLate = rules.lateAfterMin != null && firstCheckin > rules.lateAfterMin;
+  const isLate = person.type !== "waitlist" && rules.lateAfterMin != null && firstCheckin > rules.lateAfterMin;
   const checkoutMinute = minuteValue(record.checkout);
   if (checkoutMinute != null && template.requireCheckout) {
     const earlyBy = event.endMinutes - checkoutMinute;
@@ -46,13 +46,18 @@ export function getAttendanceStatus({ person, event, template, elapsedMinutes, r
 }
 
 export function getWaitlistSlots({ event, template, elapsedMinutes, records, people }) {
-  const controlledWaitlist = event.capacityLimited && event.registrationFull && template.modules.includes("waitlist");
-  if (!controlledWaitlist || elapsedMinutes < (template.rules.waitlistReleaseMin ?? 30)) return 0;
+  if (!template.modules.includes("waitlist")) return 0;
+  if (!event.capacityLimited) return null;
 
-  const reservedSeats = Math.min(event.capacity, people.filter((person) => person.type === "registered").length);
-  const registeredArrived = people.filter((person) => person.type === "registered" && getRecord(records, person.id).checkins.length > 0).length;
+  const releaseAt = template.rules.waitlistReleaseMin ?? 30;
+  const registered = people.filter((person) => person.type === "registered");
+  const registeredArrived = registered.filter((person) => getRecord(records, person.id).checkins.length > 0).length;
   const admittedWaitlist = people.filter((person) => person.type === "waitlist" && getRecord(records, person.id).checkins.length > 0).length;
-  return Math.max(0, reservedSeats - registeredArrived - admittedWaitlist);
+
+  if (elapsedMinutes >= releaseAt) {
+    return Math.max(0, event.capacity - registeredArrived - admittedWaitlist);
+  }
+  return Math.max(0, event.capacity - registered.length - admittedWaitlist);
 }
 
 export function evaluateAction({ action, person, event, template, elapsedMinutes, records, people }) {
@@ -81,20 +86,21 @@ export function evaluateAction({ action, person, event, template, elapsedMinutes
   let admissionType = person.type === "waitlist" ? "onsiteWaitlist" : "registered";
   let admissionCode = null;
   if (person.type === "waitlist" && template.modules.includes("waitlist")) {
-    const controlledWaitlist = event.capacityLimited && event.registrationFull;
-    if (controlledWaitlist) {
+    if (event.capacityLimited) {
       const releaseAt = template.rules.waitlistReleaseMin ?? 30;
-      if (elapsedMinutes < releaseAt) return { code: "WAITLIST_NOT_OPEN", tone: "warning", allowed: false, nextSteps: ["WAIT_FOR_RELEASE"] };
+      if (event.registrationFull && elapsedMinutes < releaseAt) {
+        return { code: "WAITLIST_NOT_OPEN", tone: "warning", allowed: false, nextSteps: ["WAIT_FOR_RELEASE"] };
+      }
       if (getWaitlistSlots({ event, template, elapsedMinutes, records, people }) <= 0) {
         return { code: "NO_WAITLIST_SEAT", tone: "error", allowed: false, nextSteps: ["MANUAL_REVIEW"] };
       }
-      admissionCode = "WAITLIST_ADMITTED";
+      admissionCode = event.registrationFull ? "WAITLIST_ADMITTED" : "WAITLIST_ONSITE_ADMISSION";
     } else {
       admissionCode = "WAITLIST_ONSITE_ADMISSION";
     }
   }
 
-  const late = template.rules.lateAfterMin != null && elapsedMinutes > template.rules.lateAfterMin;
+  const late = person.type !== "waitlist" && template.rules.lateAfterMin != null && elapsedMinutes > template.rules.lateAfterMin;
   const materialsEligible = Boolean(event.materialName && template.modules.includes("materials"));
   const earlyBirdEligible = Boolean(
     event.earlyBirdQuota > 0 && person.type === "registered" && person.sequence <= event.earlyBirdQuota && !late,

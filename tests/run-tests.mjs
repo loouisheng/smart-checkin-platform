@@ -1,4 +1,4 @@
-﻿import assert from "node:assert/strict";
+import assert from "node:assert/strict";
 import {
   applyAction,
   computeStats,
@@ -58,6 +58,30 @@ test("a full, seat-limited event releases no-show seats after 30 minutes", () =>
   assert.equal(getWaitlistSlots({ event, template: training, elapsedMinutes: 31, records: {}, people: roster }), 8);
 });
 
+test("waitlist follows a custom release threshold without marking admitted attendees late", () => {
+  const waitlistPerson = roster.find((person) => person.id === "W001");
+  const customTemplate = { ...training, rules: { ...training.rules, waitlistReleaseMin: 45 } };
+  const beforeRelease = evaluateAction({ action: "checkin", person: waitlistPerson, event, template: customTemplate, elapsedMinutes: 44, records: {}, people: roster });
+  const afterRelease = evaluateAction({ action: "checkin", person: waitlistPerson, event, template: customTemplate, elapsedMinutes: 45, records: {}, people: roster });
+  const records = applyAction({}, waitlistPerson.id, "checkin", 45, { admissionType: afterRelease.admissionType });
+  const status = getAttendanceStatus({ person: waitlistPerson, event, template: customTemplate, elapsedMinutes: 45, records });
+  assert.equal(beforeRelease.code, "WAITLIST_NOT_OPEN");
+  assert.equal(afterRelease.code, "WAITLIST_ADMITTED");
+  assert.equal(afterRelease.tone, "success");
+  assert.equal(status.status, "checkedIn");
+});
+
+test("an event with unreserved seats admits waitlist attendees and decrements live capacity", () => {
+  const waitlistPerson = roster.find((person) => person.id === "W001");
+  const availableEvent = { ...event, capacity: 10, registrationFull: false };
+  const before = getWaitlistSlots({ event: availableEvent, template: training, elapsedMinutes: 5, records: {}, people: roster });
+  const result = evaluateAction({ action: "checkin", person: waitlistPerson, event: availableEvent, template: training, elapsedMinutes: 5, records: {}, people: roster });
+  const records = applyAction({}, waitlistPerson.id, "checkin", 5, { admissionType: result.admissionType });
+  const after = getWaitlistSlots({ event: availableEvent, template: training, elapsedMinutes: 5, records, people: roster });
+  assert.equal(before, 2);
+  assert.equal(result.code, "WAITLIST_ONSITE_ADMISSION");
+  assert.equal(after, 1);
+});
 test("an unrestricted event records waitlist attendees as on-site waitlist immediately", () => {
   const waitlistPerson = roster.find((person) => person.id === "W001");
   const openEvent = { ...event, capacityLimited: false, registrationFull: false };

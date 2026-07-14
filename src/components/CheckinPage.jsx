@@ -1,4 +1,4 @@
-﻿import { Clock3, MapPin, Radio, Search } from "lucide-react";
+import { Clock3, MapPin, QrCode, Radio, Search } from "lucide-react";
 import { formatAttendanceTimestamp, getAttendanceStatus, getRecord } from "../domain/checkinEngine.js";
 import ResultPanel from "./ResultPanel.jsx";
 
@@ -62,15 +62,10 @@ export default function CheckinPage({
             <button className="primary-action" type="button" onClick={() => onScan("checkin")}>{t("checkin")}</button>
             <button className="secondary-action" type="button" disabled={!template.requireCheckout} onClick={() => onScan("checkout")}>{t("checkout")}</button>
           </div>
-
-          <div className="quick-roster">
-            <div className="quick-roster-header"><span>{t("quickSelect")}</span><small>{people.length} people</small></div>
-            <div className="person-chips">
-              {people.map((person) => {
-                const checked = getRecord(records, person.id).checkins.length > 0;
-                return <button key={person.id} type="button" className={`${checked ? "checked" : ""} ${person.type === "waitlist" ? "waitlist" : ""}`} onClick={() => setInputValue(person.id)}><span>{person.name[language]}</span><small>{person.id}</small></button>;
-              })}
-            </div>
+          <div className="scan-support">
+            <span className="scan-support-icon"><QrCode size={30} strokeWidth={1.7} /></span>
+            <div><strong>{isZh ? "快速掃描 QR Code" : "Scan a QR code"}</strong><p>{isZh ? "將員工卡或活動票券對準掃描器，也可直接輸入識別碼。" : "Present an employee card or event ticket, or enter an identifier manually."}</p></div>
+            <div className="scan-channel-tags"><span>QR Code</span><span>RFID</span><span>{isZh ? "手動輸入" : "Manual"}</span></div>
           </div>
         </article>
         <ResultPanel result={result} activeEvent={activeEvent} language={language} t={t} />
