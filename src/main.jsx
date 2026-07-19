@@ -1,9 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import App from "./AppV2.jsx";
-import "./styles.css";
-import "./components/featureStyles.css";
-import "./components/operationsStyles.css";
+import App from "./v3/App.jsx";
+import "./v3/brand.js";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
