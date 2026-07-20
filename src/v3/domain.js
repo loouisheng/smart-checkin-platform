@@ -1,5 +1,6 @@
 export { applyManualAssignments, isValidHttpUrl, parseRosterCsv, validateManualAssignments } from "./roster-domain.js";
 export { retainFailedRecipients, toggleFilteredRecipients, toggleRecipientSelection } from "./delivery-domain.js";
+export { canSendSurvey, getEventEndAt, getSurveyRecipients } from "./survey-domain.js";
 
 export function filterEvents(events, filters = {}) {
   const { query = "", source = "all", category = "all", status = "all", learningMode = "all", month = "", dateFrom = "", dateTo = "", module, includeHistory = false } = filters;

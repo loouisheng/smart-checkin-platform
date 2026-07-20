@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import {
-  applyAttendance, applyManualAssignments, assignGroups, buildAttendanceCsv, drawPrizeAssignments, evaluateAttendance,
-  filterEvents, getAttendanceStatus, getEarlyBirdEligible, getRecord, isValidHttpUrl, normalizeEvent, toggleLeave,
+  applyAttendance, applyManualAssignments, assignGroups, buildAttendanceCsv, canSendSurvey, drawPrizeAssignments, evaluateAttendance,
+  filterEvents, getAttendanceStatus, getEarlyBirdEligible, getEventEndAt, getRecord, getSurveyRecipients, isValidHttpUrl, normalizeEvent, toggleLeave,
   parseRosterCsv, retainFailedRecipients, toggleFilteredRecipients, toggleRecipientSelection, validateManualAssignments,
 } from "../src/v3/domain.js";
 
@@ -78,5 +78,18 @@ selectedRecipients = toggleFilteredRecipients(selectedRecipients, ["T1", "T2"], 
 assert.deepEqual([...selectedRecipients], ["T3"]);
 const retainedRecipients = retainFailedRecipients(new Set(["T1", "T2"]), [{ personId: "T1", status: "sent" }, { personId: "T2", status: "failed" }]);
 assert.deepEqual([...retainedRecipients], ["T2"]);
+
+const afterEvent = { ...event, endTime: "17:00", survey: { timing: "after", url: "https://forms.example/x" } };
+assert.equal(getEventEndAt(afterEvent).toISOString(), "2026-07-17T09:00:00.000Z");
+const lockedSurvey = canSendSurvey(afterEvent, new Date("2026-07-17T16:59:59+08:00"));
+assert.equal(lockedSurvey.ok, false);
+assert.equal(lockedSurvey.code, "SURVEY_LOCKED");
+assert.equal(canSendSurvey(afterEvent, new Date("2026-07-17T17:00:00+08:00")).ok, true);
+assert.deepEqual(getSurveyRecipients(afterEvent, people.slice(0, 3), records).map((person) => person.id), ["T1", "T2"]);
+
+const beforeEvent = { ...afterEvent, survey: { ...afterEvent.survey, timing: "before" } };
+assert.deepEqual(getSurveyRecipients(beforeEvent, people.slice(0, 3), {}).map((person) => person.id), ["T1", "T2", "T3"]);
+assert.equal(canSendSurvey({ ...beforeEvent, survey: { timing: "before", url: "" } }).code, "MISSING_SURVEY_LINK");
+assert.equal(canSendSurvey({ ...beforeEvent, status: "cancelled" }).code, "EVENT_UNAVAILABLE");
 
 console.log("ok - Event Check-In v3 domain workflows");

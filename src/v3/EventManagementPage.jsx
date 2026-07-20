@@ -10,6 +10,7 @@ import { localize } from "./i18n.js";
 import { EmptyState, EventBadge, EventMeta, Modal, PageHeader, useEventOptions } from "./Shell.jsx";
 import { RosterPicker as EnhancedRosterPicker } from "./RosterPicker.jsx";
 import { GroupingEditor } from "./GroupingEditor.jsx";
+import { SurveySettings } from "./SurveySettings.jsx";
 import "./event-management-enhancements.css";
 
 const moduleIcons = { materials: BookOpenCheck, survey: ClipboardClock, earlyBird: Gift, lottery: Sparkles };
@@ -17,7 +18,7 @@ const defaultModules = { materials: false, survey: false, earlyBird: false, lott
 const emptyForm = {
   title: "", organizer: "", creator: "", description: "", date: "2026-08-01", startTime: "09:00", endTime: "12:00", location: "", capacity: 40,
   category: "leadership", learningMode: "inPerson", grouping: false, groupingMode: "none", groupSize: 4, manualAssignments: {}, rosterPeople: [],
-  modules: defaultModules, materialName: "", materialUrl: "", surveyUrl: "", earlyQuota: 5, earlyReward: "",
+  modules: defaultModules, materialName: "", materialUrl: "", surveyUrl: "", surveyTiming: "after", earlyQuota: 5, earlyReward: "",
   prizes: [{ name: "", quantity: 1 }, { name: "", quantity: 1 }], source: "self", lmsId: null, catalogId: null, rosterCount: 12,
 };
 
@@ -38,6 +39,7 @@ function createLmsForm(event, language) {
     grouping: false,
     groupingMode: event.grouping?.mode || "none",
     rosterUrl: event.rosterUrl,
+    surveyTiming: event.survey?.timing || "after",
     modules: { ...defaultModules },
     source: "lms",
     lmsId: event.lmsId,
@@ -164,7 +166,7 @@ function EventForm({ onDone, initialEvent = null }) {
       </button>)}</div>
       <div className="conditional-grid">
         {form.modules.materials && <><label><span>{t("materialName")}</span><input value={form.materialName} onChange={(event) => update("materialName", event.target.value)} /></label><label><span>{t("materialUrl")}</span><input type="url" value={form.materialUrl} onChange={(event) => update("materialUrl", event.target.value)} /></label></>}
-        {form.modules.survey && <label className="wide"><span>{t("surveyUrl")}</span><input type="url" value={form.surveyUrl} onChange={(event) => update("surveyUrl", event.target.value)} /></label>}
+        {form.modules.survey && <SurveySettings form={form} update={update} t={t} />}
         {form.modules.earlyBird && <><label><span>{t("earlyQuota")}</span><input type="number" min="1" value={form.earlyQuota} onChange={(event) => update("earlyQuota", event.target.value)} /></label><label><span>{t("earlyReward")}</span><input value={form.earlyReward} onChange={(event) => update("earlyReward", event.target.value)} /></label></>}
         {form.modules.lottery && form.prizes.map((prize, index) => <div className="prize-row wide" key={index}><label><span>{t("prizeName")} {index + 1}</span><input value={prize.name} onChange={(event) => update("prizes", form.prizes.map((item, itemIndex) => itemIndex === index ? { ...item, name: event.target.value } : item))} /></label><label><span>{t("prizeQty")}</span><input type="number" min="1" value={prize.quantity} onChange={(event) => update("prizes", form.prizes.map((item, itemIndex) => itemIndex === index ? { ...item, quantity: event.target.value } : item))} /></label></div>)}
       </div>

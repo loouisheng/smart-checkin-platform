@@ -10,6 +10,7 @@ import { formatDate, localize } from "./i18n.js";
 import { AttendanceTable } from "./AttendanceTable.jsx";
 import { EmptyState, KpiCards, LoadingButton, PageHeader } from "./Shell.jsx";
 export { MaterialsPage } from "./MaterialsPage.jsx";
+export { SurveyPage } from "./SurveyPage.jsx";
 
 export function ReportsPage() {
   const { events, rostersByEvent, attendanceByEvent, activeEventId, t } = useApp();
@@ -69,7 +70,7 @@ function LegacyMaterialsPage() {
   </div>;
 }
 
-export function SurveyPage() {
+function LegacySurveyPage() {
   const { events, rostersByEvent, attendanceByEvent, activeEvent, deliveries, sendDelivery, busy, language, t, selectActiveEvent, setNotice } = useApp();
   const surveyEvents = events.filter((event) => event.modules.survey && event.status !== "cancelled");
   const event = surveyEvents.find((item) => item.id === activeEvent?.id) || null;

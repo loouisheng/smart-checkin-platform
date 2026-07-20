@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
 import { events as seedEvents, initialAttendance, lmsCatalog, roster, rostersByEvent as seedRosters } from "./data.js";
-import { applyAttendance, applyManualAssignments, assignGroups, drawPrizeAssignments, evaluateAttendance, getEarlyBirdEligible, getRecord, normalizeEvent, toggleLeave as updateLeave } from "./domain.js";
+import { applyAttendance, applyManualAssignments, assignGroups, canSendSurvey, drawPrizeAssignments, evaluateAttendance, getEarlyBirdEligible, getRecord, getSurveyRecipients, normalizeEvent, toggleLeave as updateLeave } from "./domain.js";
 import { createTranslator, localize } from "./i18n.js";
 
 const AppContext = createContext(null);
@@ -161,6 +161,14 @@ export function AppProvider({ children }) {
   const sendDelivery = useCallback(async ({ eventId, type, personIds }) => {
     const event = events.find((item) => item.id === eventId);
     const link = type === "materials" ? event?.materials?.url : type === "survey" ? event?.survey?.url : "reward";
+    let deliveryPersonIds = [...personIds];
+    if (type === "survey") {
+      const eligibility = canSendSurvey(event);
+      if (!eligibility.ok) throw new Error(eligibility.code);
+      const allowedIds = new Set(getSurveyRecipients(event, rostersByEvent[eventId] || [], attendanceByEvent[eventId] || {}).map((person) => person.id));
+      deliveryPersonIds = deliveryPersonIds.filter((personId) => allowedIds.has(personId));
+      if (!deliveryPersonIds.length) throw new Error("NO_SURVEY_RECIPIENTS");
+    }
     if (!navigator.onLine) throw new Error("NETWORK_OFFLINE");
     if (!link) throw new Error("MISSING_LINK");
     setBusy(true);
@@ -168,7 +176,7 @@ export function AppProvider({ children }) {
     const now = new Date().toISOString();
     const people = rostersByEvent[eventId] || [];
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const results = personIds.map((personId) => ({ personId, status: emailPattern.test(people.find((person) => person.id === personId)?.email || "") ? "sent" : "failed", error: emailPattern.test(people.find((person) => person.id === personId)?.email || "") ? null : "INVALID_EMAIL" }));
+    const results = deliveryPersonIds.map((personId) => ({ personId, status: emailPattern.test(people.find((person) => person.id === personId)?.email || "") ? "sent" : "failed", error: emailPattern.test(people.find((person) => person.id === personId)?.email || "") ? null : "INVALID_EMAIL" }));
     setDeliveries((current) => {
       const category = current[eventId]?.[type] || {};
       const nextCategory = { ...category };
@@ -180,7 +188,7 @@ export function AppProvider({ children }) {
     });
     setBusy(false);
     return { results, successCount: results.filter((result) => result.status === "sent").length, failureCount: results.filter((result) => result.status === "failed").length };
-  }, [events, rostersByEvent]);
+  }, [attendanceByEvent, events, rostersByEvent]);
 
   const runLottery = useCallback((eventId) => {
     const event = events.find((item) => item.id === eventId);
