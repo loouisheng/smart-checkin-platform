@@ -4,15 +4,16 @@ import {
   GraduationCap, Info, LockKeyhole, Search, Sparkles, Trash2, Upload, Users,
 } from "lucide-react";
 import { useApp } from "./context.jsx";
-import { downloadCsv } from "./domain.js";
+import { downloadCsv, filterEvents } from "./domain.js";
 import { categoryLabels, modeLabels } from "./data.js";
 import { localize } from "./i18n.js";
 import { EmptyState, EventBadge, EventMeta, Modal, PageHeader, useEventOptions } from "./Shell.jsx";
+import "./event-management-enhancements.css";
 
 const moduleIcons = { materials: BookOpenCheck, survey: ClipboardClock, earlyBird: Gift, lottery: Sparkles };
 const defaultModules = { materials: false, survey: false, earlyBird: false, lottery: false };
 const emptyForm = {
-  title: "", organizer: "", date: "2026-08-01", startTime: "09:00", endTime: "12:00", location: "", capacity: 40,
+  title: "", organizer: "", creator: "", description: "", date: "2026-08-01", startTime: "09:00", endTime: "12:00", location: "", capacity: 40,
   category: "leadership", learningMode: "inPerson", grouping: false, groupSize: 4,
   modules: defaultModules, materialName: "", materialUrl: "", surveyUrl: "", earlyQuota: 5, earlyReward: "",
   prizes: [{ name: "", quantity: 1 }, { name: "", quantity: 1 }], source: "self", lmsId: null, catalogId: null, rosterCount: 12,
@@ -23,6 +24,8 @@ function createLmsForm(event, language) {
     ...emptyForm,
     title: localize(event.title, language),
     organizer: localize(event.organizer, language),
+    creator: localize(event.creator, language),
+    description: localize(event.description, language),
     date: event.date,
     startTime: event.startTime,
     endTime: event.endTime,
@@ -113,7 +116,7 @@ function EventForm({ onDone, initialEvent = null }) {
 
   const submit = (event) => {
     event.preventDefault();
-    if (!form.title.trim() || !form.organizer.trim() || !form.location.trim() || form.startTime >= form.endTime) {
+    if (!form.title.trim() || !form.organizer.trim() || !form.location.trim() || (source === "self" && (!form.creator.trim() || !form.description.trim())) || form.startTime >= form.endTime) {
       setError(t("requiredFields"));
       return;
     }
@@ -129,6 +132,8 @@ function EventForm({ onDone, initialEvent = null }) {
       <div className="form-grid">
         <label className="wide"><span>{t("eventName")} *</span><input readOnly={source === "lms"} value={form.title} onChange={(event) => update("title", event.target.value)} /></label>
         <label><span>{t("organizer")} *</span><input readOnly={source === "lms"} value={form.organizer} onChange={(event) => update("organizer", event.target.value)} /></label>
+        <label><span>{t("courseCreator")} *</span><input readOnly={source === "lms"} value={form.creator} onChange={(event) => update("creator", event.target.value)} /></label>
+        <label className="wide"><span>{t("courseDescription")} *</span><textarea rows="4" readOnly={source === "lms"} value={form.description} onChange={(event) => update("description", event.target.value)} /></label>
         <label><span>{t("capacity")}</span><input readOnly={source === "lms"} type="number" min="1" value={form.capacity} onChange={(event) => update("capacity", event.target.value)} /></label>
         <label><span>{t("date")}</span><input readOnly={source === "lms"} type="date" value={form.date} onChange={(event) => update("date", event.target.value)} /></label>
         <label><span>{t("startTime")}</span><input readOnly={source === "lms"} type="time" value={form.startTime} onChange={(event) => update("startTime", event.target.value)} /></label>
@@ -170,13 +175,15 @@ function LmsCatalog({ onSelect }) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
   const [mode, setMode] = useState("all");
+  const [month, setMonth] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [selectedId, setSelectedId] = useState(lmsCatalog[0]?.id);
-  const filtered = useMemo(() => lmsCatalog.filter((event) => {
-    const searchable = Object.values(event.title).join(" ").toLowerCase();
-    return (!query.trim() || searchable.includes(query.trim().toLowerCase()))
-      && (category === "all" || event.category === category)
-      && (mode === "all" || event.learningMode === mode);
-  }), [category, lmsCatalog, mode, query]);
+  const filterResult = useMemo(() => {
+    try { return { events: filterEvents(lmsCatalog, { query, category, learningMode: mode, month, dateFrom, dateTo }), error: null }; }
+    catch (error) { return { events: [], error: error.message }; }
+  }, [category, dateFrom, dateTo, lmsCatalog, mode, month, query]);
+  const filtered = filterResult.events;
   const selected = lmsCatalog.find((event) => event.id === selectedId);
   const alreadyImported = selected && events.some((event) => event.lmsId === selected.lmsId && event.status !== "cancelled");
 
@@ -184,7 +191,11 @@ function LmsCatalog({ onSelect }) {
     <div className="lms-searchbar"><label className="search-field wide"><Search size={17} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t("searchEvent")} /></label>
       <select value={category} onChange={(event) => setCategory(event.target.value)}><option value="all">{t("allTypes")}</option>{Object.keys(categoryLabels).map((value) => <option key={value} value={value}>{localize(categoryLabels[value], language)}</option>)}</select>
       <select value={mode} onChange={(event) => setMode(event.target.value)}><option value="all">{t("learningMode")}</option>{Object.keys(modeLabels).map((value) => <option key={value} value={value}>{localize(modeLabels[value], language)}</option>)}</select>
+      <label className="date-filter"><span>{t("eventMonth")}</span><input type="month" value={month} onChange={(event) => setMonth(event.target.value)} /></label>
+      <label className="date-filter"><span>{t("dateFrom")}</span><input type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} /></label>
+      <label className="date-filter"><span>{t("dateTo")}</span><input type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} /></label>
     </div>
+    {filterResult.error && <p className="form-error">{t("invalidDateRange")}</p>}
     <div className="lms-layout"><section className="lms-results">{filtered.length ? filtered.map((event) => <button key={event.id} type="button" className={event.id === selectedId ? "selected" : ""} onClick={() => setSelectedId(event.id)}>
       <span><GraduationCap size={18} /></span><div><strong>{localize(event.title, language)}</strong><small>{event.date} · {localize(categoryLabels[event.category], language)} · {localize(modeLabels[event.learningMode], language)}</small></div>
     </button>) : <EmptyState title={t("empty")} />}</section>
@@ -205,6 +216,8 @@ function EventDetails({ event }) {
     <div className="wide"><span>{t("eventName")}</span><strong>{localize(event.title, language)}</strong></div>
     <div><span>{t("sourceLabel")}</span><strong>{event.source === "lms" ? t("sourceLms") : t("sourceSelf")}</strong></div>
     <div><span>{t("organizer")}</span><strong>{localize(event.organizer, language)}</strong></div>
+    <div><span>{t("courseCreator")}</span><strong>{localize(event.creator, language)}</strong></div>
+    <div className="wide"><span>{t("courseDescription")}</span><strong>{localize(event.description, language)}</strong></div>
     <div><span>{t("date")}</span><strong>{event.date} · {event.startTime}–{event.endTime}</strong></div>
     <div><span>{t("location")}</span><strong>{localize(event.location, language)}</strong></div>
     <div><span>{t("category")}</span><strong>{localize(categoryLabels[event.category], language)}</strong></div>
@@ -221,18 +234,21 @@ function ManagedEvents() {
   const [source, setSource] = useState("all");
   const [category, setCategory] = useState("all");
   const [status, setStatus] = useState("all");
+  const [month, setMonth] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [cancelTarget, setCancelTarget] = useState(null);
   const [detailTarget, setDetailTarget] = useState(null);
   const [reason, setReason] = useState("");
   const visibleEvents = events.filter((event) => event.status !== "cancelled");
   const { categories, statuses } = useEventOptions(visibleEvents);
-  const filtered = visibleEvents.filter((event) => {
-    const searchable = Object.values(event.title).join(" ").toLowerCase();
-    return (!query.trim() || searchable.includes(query.trim().toLowerCase()))
-      && (source === "all" || event.source === source)
-      && (category === "all" || event.category === category)
-      && (status === "all" || event.status === status);
-  }).sort((a, b) => a.date.localeCompare(b.date));
+  let filtered = [];
+  let filterError = null;
+  try {
+    filtered = filterEvents(visibleEvents, { query, source, category, status, month, dateFrom, dateTo });
+  } catch (error) {
+    filterError = error.message;
+  }
 
   const confirmCancel = () => {
     if (cancelEvent(cancelTarget.id, reason)) {
@@ -246,7 +262,11 @@ function ManagedEvents() {
       <Filter size={15} /><select value={source} onChange={(event) => setSource(event.target.value)}><option value="all">{t("allSources")}</option><option value="lms">{t("sourceLms")}</option><option value="self">{t("sourceSelf")}</option></select>
       <select value={category} onChange={(event) => setCategory(event.target.value)}><option value="all">{t("allTypes")}</option>{categories.map((value) => <option key={value} value={value}>{localize(categoryLabels[value], language)}</option>)}</select>
       <select value={status} onChange={(event) => setStatus(event.target.value)}><option value="all">{t("allStatuses")}</option>{statuses.map((value) => <option key={value} value={value}>{t(value)}</option>)}</select>
+      <label className="date-filter"><span>{t("eventMonth")}</span><input type="month" value={month} onChange={(event) => setMonth(event.target.value)} /></label>
+      <label className="date-filter"><span>{t("dateFrom")}</span><input type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} /></label>
+      <label className="date-filter"><span>{t("dateTo")}</span><input type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} /></label>
     </div>
+    {filterError && <p className="form-error">{t("invalidDateRange")}</p>}
     <div className="managed-list">{filtered.length ? filtered.map((event) => <article key={event.id}>
       <div className="event-source-icon">{event.source === "lms" ? <GraduationCap size={20} /> : <CalendarPlus size={20} />}</div>
       <div className="managed-copy"><div><EventBadge event={event} /><span>{event.source === "lms" ? t("sourceLms") : t("sourceSelf")}</span></div><h2>{localize(event.title, language)}</h2><EventMeta event={event} />

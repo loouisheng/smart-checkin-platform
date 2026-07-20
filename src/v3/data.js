@@ -94,7 +94,12 @@ const rawEvents = [
     cancellationReason: l("因颱風影響延期", "因台风影响延期", "Postponed due to typhoon", "台風のため延期"),
   },
 ];
-export const events = rawEvents.map(normalizeEvent);
+export const events = rawEvents.map((event) => normalizeEvent({
+  ...event,
+  creator: event.creator || event.organizer,
+  description: event.description || (event.source === "lms" ? l("課程資訊由 LMS 同步提供。", "课程信息由 LMS 同步提供。", "Course information is synchronized from LMS.", "コース情報は LMS から同期されます。") : l("由活動管理者建立的內部學習活動。", "由活动管理员创建的内部学习活动。", "An internal learning event created by the event manager.", "イベント管理者が作成した社内学習イベントです。")),
+  rosterUrl: event.rosterUrl || (event.source === "lms" ? `https://lms.example/events/${event.lmsId}/roster` : null),
+}));
 
 function assignRoster(event, count = 12) {
   const people = roster.slice(0, count);

@@ -1,0 +1,8 @@
+.form-grid textarea{width:100%;min-height:92px;padding:10px 11px;border:1px solid #d9e3f0;border-radius:10px;resize:vertical;color:#172033;background:#fff;font:inherit;line-height:1.55}
+.form-grid input[readonly],.form-grid textarea[readonly],.form-grid select:disabled{color:#475467;border-color:#e1e7ef;background:#f7f9fc;cursor:not-allowed}
+.managed-filter,.lms-searchbar{flex-wrap:wrap}
+.managed-filter .date-filter,.lms-searchbar .date-filter{min-width:142px;display:flex;flex-direction:column;gap:4px}
+.managed-filter .date-filter span,.lms-searchbar .date-filter span{color:#667085;font-size:8px;font-weight:700}
+.managed-filter .date-filter input,.lms-searchbar .date-filter input{min-height:38px;border-color:#d9e3f0;background:#fff}
+.event-detail-grid .wide strong{white-space:normal;line-height:1.55}
+@media(max-width:680px){.managed-filter .date-filter,.lms-searchbar .date-filter{width:100%;min-width:0}}

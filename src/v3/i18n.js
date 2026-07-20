@@ -279,6 +279,10 @@ Object.assign(zhTW, { filters: "篩選", eventMonth: "活動月份", allMonths: 
 Object.assign(zhCN, { filters: "筛选", eventMonth: "活动月份", allMonths: "所有月份", dateFrom: "开始日期", dateTo: "结束日期", eventsUnit: "个活动", clearFilters: "清除条件", invalidDateRange: "开始日期不能晚于结束日期。" });
 Object.assign(ja, { filters: "絞り込み", eventMonth: "開催月", allMonths: "すべての月", dateFrom: "開始日", dateTo: "終了日", eventsUnit: "件", clearFilters: "条件をクリア", invalidDateRange: "開始日は終了日より前にしてください。" });
 
+Object.assign(en, { courseCreator: "Course creator", courseDescription: "Course description" });
+Object.assign(zhTW, { courseCreator: "課程建立人", courseDescription: "課程描述" });
+Object.assign(zhCN, { courseCreator: "课程创建人", courseDescription: "课程描述" });
+Object.assign(ja, { courseCreator: "コース作成者", courseDescription: "コース説明" });
 for (const dictionary of [zhTW, zhCN, ja]) {
   for (const [key, value] of Object.entries(dictionary)) {
     if (typeof value === "string" && /\?{2,}/.test(value)) dictionary[key] = en[key] ?? key;
