@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import {
   applyAttendance, assignGroups, buildAttendanceCsv, drawPrizeAssignments, evaluateAttendance,
-  getAttendanceStatus, getEarlyBirdEligible, getRecord, toggleLeave,
+  filterEvents, getAttendanceStatus, getEarlyBirdEligible, getRecord, toggleLeave,
 } from "../src/v3/domain.js";
 
 const people = Array.from({ length: 10 }, (_, index) => ({
@@ -33,5 +33,18 @@ const csv = buildAttendanceCsv({ event, people: people.slice(0, 2), records, lan
 assert.equal(csv.startsWith("\uFEFF"), true);
 assert.equal(csv.includes("Employee ID"), true);
 assert.equal(csv.includes("T1"), true);
+
+const filterFixtures = [
+  { id: "E1", title: { en: "July Leadership" }, source: "lms", category: "leadership", status: "completed", date: "2026-07-12", startTime: "09:00", modules: { survey: true } },
+  { id: "E2", title: { en: "August AI" }, source: "self", category: "digital", status: "upcoming", date: "2026-08-03", startTime: "10:00", modules: { survey: false } },
+];
+
+assert.deepEqual(filterEvents(filterFixtures, { query: "leadership" }).map(({ id }) => id), ["E1"]);
+assert.deepEqual(filterEvents(filterFixtures, { month: "2026-07" }).map(({ id }) => id), ["E1"]);
+assert.deepEqual(filterEvents(filterFixtures, { dateFrom: "2026-08-01", dateTo: "2026-08-31" }).map(({ id }) => id), ["E2"]);
+assert.deepEqual(filterEvents(filterFixtures, { module: "survey" }).map(({ id }) => id), ["E1"]);
+assert.deepEqual(filterEvents(filterFixtures, { includeHistory: true }).map(({ id }) => id), ["E1"]);
+assert.deepEqual(filterEvents(filterFixtures, { source: "self", category: "digital", status: "upcoming" }).map(({ id }) => id), ["E2"]);
+assert.throws(() => filterEvents(filterFixtures, { dateFrom: "2026-08-31", dateTo: "2026-08-01" }), /INVALID_DATE_RANGE/);
 
 console.log("ok - Event Check-In v3 domain workflows");

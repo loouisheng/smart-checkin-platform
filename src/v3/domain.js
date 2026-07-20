@@ -1,3 +1,25 @@
+export function filterEvents(events, filters = {}) {
+  const { query = "", source = "all", category = "all", status = "all", learningMode = "all", month = "", dateFrom = "", dateTo = "", module, includeHistory = false } = filters;
+  if (dateFrom && dateTo && dateFrom > dateTo) throw new Error("INVALID_DATE_RANGE");
+
+  const needle = query.trim().toLowerCase();
+  const filtered = (events || []).filter((event) => {
+    if (includeHistory ? !["completed", "cancelled"].includes(event.status) : event.status === "cancelled") return false;
+    if (needle && !Object.values(event.title || {}).join(" ").toLowerCase().includes(needle)) return false;
+    if (source !== "all" && source && event.source !== source) return false;
+    if (category !== "all" && category && event.category !== category) return false;
+    if (status !== "all" && status && event.status !== status) return false;
+    if (learningMode !== "all" && learningMode && event.learningMode !== learningMode) return false;
+    if (month && !String(event.date || "").startsWith(month)) return false;
+    if (dateFrom && event.date < dateFrom) return false;
+    if (dateTo && event.date > dateTo) return false;
+    if (module && !event.modules?.[module]) return false;
+    return true;
+  });
+
+  return [...filtered].sort((a, b) => `${a.date || ""}T${a.startTime || ""}`.localeCompare(`${b.date || ""}T${b.startTime || ""}`));
+}
+
 export function assignGroups(people, targetSize) {
   const size = Math.max(1, Number(targetSize) || 1);
   const groupCount = Math.max(1, Math.ceil(people.length / size));
