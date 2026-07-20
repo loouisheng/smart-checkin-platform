@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import {
   applyAttendance, applyManualAssignments, assignGroups, buildAttendanceCsv, canSendSurvey, drawPrizeAssignments, evaluateAttendance,
   filterEvents, getAttendanceStatus, getEarlyBirdEligible, getEventEndAt, getRecord, getSurveyRecipients, isValidHttpUrl, normalizeEvent, toggleLeave,
@@ -108,5 +109,8 @@ applyDocumentLanguage(fakeDocument, "ja");
 assert.equal(fakeDocument.documentElement.lang, "ja");
 applyDocumentLanguage(fakeDocument, "invalid");
 assert.equal(fakeDocument.documentElement.lang, "zh-TW");
+
+const indexHtml = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+assert.match(indexHtml, /<title>Event Check-In<\/title>/);
 
 console.log("ok - Event Check-In v3 domain workflows");
