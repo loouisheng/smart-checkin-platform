@@ -274,6 +274,11 @@ Object.assign(zhTW, { cancelEvent: "刪除活動" });
 Object.assign(zhCN, { cancelEvent: "删除活动" });
 Object.assign(ja, { cancelEvent: "イベントを削除" });
 
+Object.assign(en, { filters: "Filters", eventMonth: "Event month", allMonths: "All months", dateFrom: "From", dateTo: "To", eventsUnit: "events", clearFilters: "Clear", invalidDateRange: "The start date must not be later than the end date." });
+Object.assign(zhTW, { filters: "篩選", eventMonth: "活動月份", allMonths: "所有月份", dateFrom: "開始日期", dateTo: "結束日期", eventsUnit: "個活動", clearFilters: "清除條件", invalidDateRange: "開始日期不可晚於結束日期。" });
+Object.assign(zhCN, { filters: "筛选", eventMonth: "活动月份", allMonths: "所有月份", dateFrom: "开始日期", dateTo: "结束日期", eventsUnit: "个活动", clearFilters: "清除条件", invalidDateRange: "开始日期不能晚于结束日期。" });
+Object.assign(ja, { filters: "絞り込み", eventMonth: "開催月", allMonths: "すべての月", dateFrom: "開始日", dateTo: "終了日", eventsUnit: "件", clearFilters: "条件をクリア", invalidDateRange: "開始日は終了日より前にしてください。" });
+
 for (const dictionary of [zhTW, zhCN, ja]) {
   for (const [key, value] of Object.entries(dictionary)) {
     if (typeof value === "string" && /\?{2,}/.test(value)) dictionary[key] = en[key] ?? key;
