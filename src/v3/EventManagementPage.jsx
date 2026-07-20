@@ -1,20 +1,22 @@
 import { useMemo, useRef, useState } from "react";
 import {
-  BookOpenCheck, CalendarPlus, Check, ClipboardList as ClipboardClock, Download, Eye, FileSpreadsheet, Filter, Gift,
+  BookOpenCheck, CalendarPlus, Check, ClipboardList as ClipboardClock, Download, ExternalLink, Eye, FileSpreadsheet, Filter, Gift,
   GraduationCap, Info, LockKeyhole, Search, Sparkles, Trash2, Upload, Users,
 } from "lucide-react";
 import { useApp } from "./context.jsx";
-import { downloadCsv, filterEvents } from "./domain.js";
-import { categoryLabels, modeLabels } from "./data.js";
+import { downloadCsv, filterEvents, isValidHttpUrl, parseRosterCsv, validateManualAssignments } from "./domain.js";
+import { categoryLabels, modeLabels, roster } from "./data.js";
 import { localize } from "./i18n.js";
 import { EmptyState, EventBadge, EventMeta, Modal, PageHeader, useEventOptions } from "./Shell.jsx";
+import { RosterPicker as EnhancedRosterPicker } from "./RosterPicker.jsx";
+import { GroupingEditor } from "./GroupingEditor.jsx";
 import "./event-management-enhancements.css";
 
 const moduleIcons = { materials: BookOpenCheck, survey: ClipboardClock, earlyBird: Gift, lottery: Sparkles };
 const defaultModules = { materials: false, survey: false, earlyBird: false, lottery: false };
 const emptyForm = {
   title: "", organizer: "", creator: "", description: "", date: "2026-08-01", startTime: "09:00", endTime: "12:00", location: "", capacity: 40,
-  category: "leadership", learningMode: "inPerson", grouping: false, groupSize: 4,
+  category: "leadership", learningMode: "inPerson", grouping: false, groupingMode: "none", groupSize: 4, manualAssignments: {}, rosterPeople: [],
   modules: defaultModules, materialName: "", materialUrl: "", surveyUrl: "", earlyQuota: 5, earlyReward: "",
   prizes: [{ name: "", quantity: 1 }, { name: "", quantity: 1 }], source: "self", lmsId: null, catalogId: null, rosterCount: 12,
 };
@@ -34,6 +36,8 @@ function createLmsForm(event, language) {
     category: event.category,
     learningMode: event.learningMode,
     grouping: false,
+    groupingMode: event.grouping?.mode || "none",
+    rosterUrl: event.rosterUrl,
     modules: { ...defaultModules },
     source: "lms",
     lmsId: event.lmsId,
@@ -107,7 +111,7 @@ function RosterPicker({ source, mode, setMode, rosterCount, setRosterCount, file
 function EventForm({ onDone, initialEvent = null }) {
   const { language, t, saveSelfEvent } = useApp();
   const source = initialEvent ? "lms" : "self";
-  const [form, setForm] = useState(() => initialEvent ? createLmsForm(initialEvent, language) : { ...emptyForm, modules: { ...defaultModules } });
+  const [form, setForm] = useState(() => initialEvent ? createLmsForm(initialEvent, language) : { ...emptyForm, modules: { ...defaultModules }, rosterPeople: roster.slice(0, 12).map((person) => ({ ...person, group: null })), manualAssignments: {} });
   const [rosterMode, setRosterMode] = useState(initialEvent ? "lms" : "demo-full");
   const [fileName, setFileName] = useState("");
   const [error, setError] = useState("");
@@ -118,6 +122,10 @@ function EventForm({ onDone, initialEvent = null }) {
     event.preventDefault();
     if (!form.title.trim() || !form.organizer.trim() || !form.location.trim() || (source === "self" && (!form.creator.trim() || !form.description.trim())) || form.startTime >= form.endTime) {
       setError(t("requiredFields"));
+      return;
+    }
+    if (source === "self" && form.groupingMode === "manual" && !validateManualAssignments(form.rosterPeople, form.manualAssignments).ok) {
+      setError(t("manualGroupingIncomplete"));
       return;
     }
     if (form.modules.survey && !form.surveyUrl.trim()) return setError(t("missingLink"));
@@ -144,14 +152,10 @@ function EventForm({ onDone, initialEvent = null }) {
       </div>
     </section>
 
-    <RosterPicker source={source} mode={rosterMode} setMode={setRosterMode} rosterCount={form.rosterCount} setRosterCount={(value) => update("rosterCount", value)} fileName={fileName} setFileName={setFileName} setError={setError} />
+    <EnhancedRosterPicker source={source} mode={rosterMode} setMode={setRosterMode} rosterPeople={form.rosterPeople || []} setRosterPeople={(people) => setForm((current) => ({ ...current, rosterPeople: people, rosterCount: people.length, manualAssignments: Object.fromEntries(Object.entries(current.manualAssignments || {}).filter(([personId]) => people.some((person) => person.id === personId))) }))} fileName={fileName} setFileName={setFileName} setError={setError} rosterUrl={initialEvent?.rosterUrl} />
 
     <section className="form-section"><header><span>02</span><div><h2>{t("grouping")}</h2><p>{t("groupingDesc")}</p></div></header>
-      <div className="inline-setting">
-        <button className={form.grouping ? "toggle active" : "toggle"} type="button" onClick={() => update("grouping", !form.grouping)} aria-pressed={form.grouping}><span /></button>
-        <strong>{t("grouping")}</strong>
-        {form.grouping && <label><span>{t("groupSize")}</span><input type="number" min="2" value={form.groupSize} onChange={(event) => update("groupSize", event.target.value)} /></label>}
-      </div>
+      <GroupingEditor source={source} form={form} setForm={setForm} language={language} t={t} lmsEvent={initialEvent} />
     </section>
 
     <section className="form-section"><header><span>03</span><div><h2>{t("modules")}</h2><p>{t("modulesDesc")}</p></div></header>

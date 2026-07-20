@@ -127,7 +127,8 @@ export const lmsCatalog = [
   {
     ...events[1], id: "LMS-CATALOG-2204", lmsId: "LRN-9204", lifecycle: "available", status: "upcoming", date: "2026-08-06",
     title: l("設計思考實務工作坊", "设计思考实务工作坊", "Design Thinking in Practice", "デザイン思考実践ワークショップ"),
-    category: "innovation", audience: "all", grouping: { enabled: true, targetSize: 5 },
+    category: "innovation", audience: "all", grouping: { mode: "automatic", enabled: true, targetSize: 5, assignments: {} },
+    rosterUrl: "https://lms.example/events/LRN-9204/roster",
     modules: modules({ materials: true, survey: true, lottery: true }),
     lottery: { prizes: [{ id: "p1", name: l("創新實踐獎", "创新实践奖", "Innovation award", "イノベーション賞"), quantity: 3 }] },
   },
@@ -135,7 +136,8 @@ export const lmsCatalog = [
     ...events[1], id: "LMS-CATALOG-2231", lmsId: "LRN-9231", lifecycle: "available", status: "upcoming", date: "2026-08-14",
     title: l("企業 ESG 與永續經營", "企业 ESG 与可持续经营", "ESG & Sustainable Business", "ESG とサステナブル経営"),
     category: "compliance", learningMode: "online", audience: "all",
-    grouping: { enabled: false, targetSize: null }, modules: modules({ materials: true, survey: true }), lottery: null,
+    grouping: { mode: "none", enabled: false, targetSize: null, assignments: {} }, modules: modules({ materials: true, survey: true }), lottery: null,
+    rosterUrl: "https://lms.example/events/LRN-9231/roster",
   },
 ];
 

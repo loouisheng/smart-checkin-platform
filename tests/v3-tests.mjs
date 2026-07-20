@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import {
-  applyAttendance, assignGroups, buildAttendanceCsv, drawPrizeAssignments, evaluateAttendance,
-  filterEvents, getAttendanceStatus, getEarlyBirdEligible, getRecord, normalizeEvent, toggleLeave,
+  applyAttendance, applyManualAssignments, assignGroups, buildAttendanceCsv, drawPrizeAssignments, evaluateAttendance,
+  filterEvents, getAttendanceStatus, getEarlyBirdEligible, getRecord, isValidHttpUrl, normalizeEvent, toggleLeave,
+  parseRosterCsv, validateManualAssignments,
 } from "../src/v3/domain.js";
 
 const people = Array.from({ length: 10 }, (_, index) => ({
@@ -54,4 +55,16 @@ assert.deepEqual(normalized.grouping.assignments, {});
 assert.equal(normalized.survey.timing, "after");
 assert.equal(normalized.rosterUrl, null);
 
+const manualValidation = validateManualAssignments(people.slice(0, 2), { T1: "A", T2: " " });
+assert.deepEqual(manualValidation, { ok: false, unassignedIds: ["T2"] });
+const manualPeople = applyManualAssignments(people.slice(0, 2), { T1: " A ", T2: "B" });
+assert.deepEqual(manualPeople.map((person) => person.group), ["A", "B"]);
+const parsedRoster = parseRosterCsv("employee_id,name,department,email\nE01,Ada,HR,ada@example.com");
+assert.deepEqual(parsedRoster.people.map((person) => person.id), ["E01"]);
+assert.equal(parsedRoster.people[0].email, "ada@example.com");
+assert.throws(() => parseRosterCsv("employee_id,name\nE01,Ada\nE01,Grace"), /DUPLICATE_EMPLOYEE_ID/);
+
+assert.equal(isValidHttpUrl("https://lms.example/events/E1/roster"), true);
+assert.equal(isValidHttpUrl("javascript:alert(1)"), false);
+assert.equal(isValidHttpUrl(""), false);
 console.log("ok - Event Check-In v3 domain workflows");

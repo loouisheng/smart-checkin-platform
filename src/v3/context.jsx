@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
 import { events as seedEvents, initialAttendance, lmsCatalog, roster, rostersByEvent as seedRosters } from "./data.js";
-import { applyAttendance, assignGroups, drawPrizeAssignments, evaluateAttendance, getEarlyBirdEligible, getRecord, normalizeEvent, toggleLeave as updateLeave } from "./domain.js";
+import { applyAttendance, applyManualAssignments, assignGroups, drawPrizeAssignments, evaluateAttendance, getEarlyBirdEligible, getRecord, normalizeEvent, toggleLeave as updateLeave } from "./domain.js";
 import { createTranslator, localize } from "./i18n.js";
 
 const AppContext = createContext(null);
@@ -112,7 +112,7 @@ export function AppProvider({ children }) {
       learningMode: form.learningMode,
       audience: lmsSource?.audience || "all",
       capacity: Number(form.capacity),
-      grouping: { mode: groupingMode, enabled: groupingMode !== "none", targetSize: groupingMode === "automatic" ? Number(form.groupSize || lmsSource?.grouping?.targetSize) : null, assignments: { ...(form.manualAssignments || lmsSource?.grouping?.assignments || {}) } },
+      grouping: { mode: groupingMode, enabled: groupingMode !== "none", targetSize: groupingMode === "automatic" ? Number(lmsSource ? lmsSource.grouping?.targetSize : form.groupSize) : null, assignments: { ...(lmsSource?.grouping?.assignments || form.manualAssignments || {}) } },
       modules: { ...form.modules },
       materials: form.modules.materials ? { name: makeLocalized(form.materialName), url: form.materialUrl } : null,
       survey: form.modules.survey ? { url: form.surveyUrl, timing: form.surveyTiming || "after", autoSend: (form.surveyTiming || "after") === "after" } : null,
@@ -121,8 +121,9 @@ export function AppProvider({ children }) {
       rules: { lateAfterMin: 15, absentAfterMin: 30 },
     };
     const rosterCount = Math.max(1, Math.min(Number(form.rosterCount) || 12, roster.length));
-    const selectedRoster = roster.slice(0, rosterCount);
-    const people = event.grouping.mode === "automatic" ? assignGroups(selectedRoster, event.grouping.targetSize) : selectedRoster.map((person) => ({ ...person, group: null }));
+    const selectedRoster = form.source === "lms" ? roster.slice(0, rosterCount) : (form.rosterPeople || []).map((person) => ({ ...person }));
+    const people = event.grouping.mode === "automatic" ? assignGroups(selectedRoster, event.grouping.targetSize)
+      : event.grouping.mode === "manual" ? applyManualAssignments(selectedRoster, event.grouping.assignments) : selectedRoster.map((person) => ({ ...person, group: null }));
     setEvents((current) => [...current.filter((item) => item.id !== id), event]);
     setRostersByEvent((current) => ({ ...current, [id]: people }));
     setAttendanceByEvent((current) => ({ ...current, [id]: {} }));
