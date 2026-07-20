@@ -20,6 +20,27 @@ export function filterEvents(events, filters = {}) {
   return [...filtered].sort((a, b) => `${a.date || ""}T${a.startTime || ""}`.localeCompare(`${b.date || ""}T${b.startTime || ""}`));
 }
 
+export function normalizeEvent(event) {
+  const grouping = event.grouping || {};
+  const mode = grouping.mode || (grouping.enabled ? "automatic" : "none");
+  const localizedEmpty = { "zh-TW": "", "zh-CN": "", en: "", ja: "" };
+
+  return {
+    ...event,
+    creator: event.creator || event.organizer || localizedEmpty,
+    description: event.description || localizedEmpty,
+    rosterUrl: event.rosterUrl || null,
+    grouping: {
+      ...grouping,
+      mode,
+      enabled: mode !== "none",
+      targetSize: mode === "automatic" ? Number(grouping.targetSize) || null : grouping.targetSize || null,
+      assignments: { ...(grouping.assignments || {}) },
+    },
+    survey: event.survey ? { ...event.survey, timing: event.survey.timing || "after" } : null,
+  };
+}
+
 export function assignGroups(people, targetSize) {
   const size = Math.max(1, Number(targetSize) || 1);
   const groupCount = Math.max(1, Math.ceil(people.length / size));

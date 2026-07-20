@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
 import { events as seedEvents, initialAttendance, lmsCatalog, roster, rostersByEvent as seedRosters } from "./data.js";
-import { applyAttendance, assignGroups, drawPrizeAssignments, evaluateAttendance, getEarlyBirdEligible, getRecord, toggleLeave as updateLeave } from "./domain.js";
+import { applyAttendance, assignGroups, drawPrizeAssignments, evaluateAttendance, getEarlyBirdEligible, getRecord, normalizeEvent, toggleLeave as updateLeave } from "./domain.js";
 import { createTranslator, localize } from "./i18n.js";
 
 const AppContext = createContext(null);
@@ -26,7 +26,7 @@ function delay(ms = 360) {
 export function AppProvider({ children }) {
   const [language, setLanguageState] = useState(() => localStorage.getItem("event-checkin-language") || "zh-TW");
   const [page, setPageState] = useState(() => new URLSearchParams(window.location.search).get("page") || "checkin");
-  const [events, setEvents] = useState(() => clone(seedEvents));
+  const [events, setEvents] = useState(() => clone(seedEvents).map(normalizeEvent));
   const [rostersByEvent, setRostersByEvent] = useState(() => clone(seedRosters));
   const [attendanceByEvent, setAttendanceByEvent] = useState(() => clone(initialAttendance));
   const [deliveries, setDeliveries] = useState(initialDeliveries);
@@ -92,6 +92,7 @@ export function AppProvider({ children }) {
       ? `LMS-${form.lmsId}`
       : `SELF-${form.date.replaceAll("-", "")}-${Date.now().toString().slice(-4)}`;
     const makeLocalized = (value) => ({ "zh-TW": value, "zh-CN": value, en: value, ja: value });
+    const groupingMode = lmsSource ? (lmsSource.grouping?.mode || (lmsSource.grouping?.enabled ? "automatic" : "none")) : (form.groupingMode || (form.grouping ? "automatic" : "none"));
     const event = {
       id,
       lmsId: form.source === "lms" ? form.lmsId : undefined,
@@ -100,6 +101,9 @@ export function AppProvider({ children }) {
       status: "upcoming",
       title: lmsSource ? clone(lmsSource.title) : makeLocalized(form.title),
       organizer: lmsSource ? clone(lmsSource.organizer) : makeLocalized(form.organizer),
+      creator: lmsSource ? clone(lmsSource.creator) : makeLocalized(form.creator || form.organizer),
+      description: lmsSource ? clone(lmsSource.description) : makeLocalized(form.description || ""),
+      rosterUrl: lmsSource?.rosterUrl || null,
       location: lmsSource ? clone(lmsSource.location) : makeLocalized(form.location),
       date: form.date,
       startTime: form.startTime,
@@ -108,17 +112,17 @@ export function AppProvider({ children }) {
       learningMode: form.learningMode,
       audience: lmsSource?.audience || "all",
       capacity: Number(form.capacity),
-      grouping: { enabled: form.grouping, targetSize: form.grouping ? Number(form.groupSize) : null },
+      grouping: { mode: groupingMode, enabled: groupingMode !== "none", targetSize: groupingMode === "automatic" ? Number(form.groupSize || lmsSource?.grouping?.targetSize) : null, assignments: { ...(form.manualAssignments || lmsSource?.grouping?.assignments || {}) } },
       modules: { ...form.modules },
       materials: form.modules.materials ? { name: makeLocalized(form.materialName), url: form.materialUrl } : null,
-      survey: form.modules.survey ? { url: form.surveyUrl, autoSend: true } : null,
+      survey: form.modules.survey ? { url: form.surveyUrl, timing: form.surveyTiming || "after", autoSend: (form.surveyTiming || "after") === "after" } : null,
       earlyBird: form.modules.earlyBird ? { quota: Number(form.earlyQuota), reward: makeLocalized(form.earlyReward) } : null,
       lottery: form.modules.lottery ? { prizes: form.prizes.filter((prize) => prize.name).map((prize, index) => ({ id: `p${index + 1}`, name: makeLocalized(prize.name), quantity: Number(prize.quantity) })) } : null,
       rules: { lateAfterMin: 15, absentAfterMin: 30 },
     };
     const rosterCount = Math.max(1, Math.min(Number(form.rosterCount) || 12, roster.length));
     const selectedRoster = roster.slice(0, rosterCount);
-    const people = form.grouping ? assignGroups(selectedRoster, Number(form.groupSize)) : selectedRoster.map((person) => ({ ...person, group: null }));
+    const people = event.grouping.mode === "automatic" ? assignGroups(selectedRoster, event.grouping.targetSize) : selectedRoster.map((person) => ({ ...person, group: null }));
     setEvents((current) => [...current.filter((item) => item.id !== id), event]);
     setRostersByEvent((current) => ({ ...current, [id]: people }));
     setAttendanceByEvent((current) => ({ ...current, [id]: {} }));
@@ -134,8 +138,8 @@ export function AppProvider({ children }) {
     if (events.some((event) => event.lmsId === source.lmsId)) throw new Error("DUPLICATE_LMS_EVENT");
     setBusy(true);
     await delay();
-    const event = { ...clone(source), id: `LMS-${source.lmsId}`, lifecycle: "activated" };
-    const people = event.grouping.enabled ? assignGroups(roster, event.grouping.targetSize) : roster.map((person) => ({ ...person, group: null }));
+    const event = normalizeEvent({ ...clone(source), id: `LMS-${source.lmsId}`, lifecycle: "activated" });
+    const people = event.grouping.mode === "automatic" ? assignGroups(roster, event.grouping.targetSize) : roster.map((person) => ({ ...person, group: null }));
     setEvents((current) => [...current, event]);
     setRostersByEvent((current) => ({ ...current, [event.id]: people }));
     setAttendanceByEvent((current) => ({ ...current, [event.id]: {} }));

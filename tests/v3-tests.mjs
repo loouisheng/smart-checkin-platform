@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import {
   applyAttendance, assignGroups, buildAttendanceCsv, drawPrizeAssignments, evaluateAttendance,
-  filterEvents, getAttendanceStatus, getEarlyBirdEligible, getRecord, toggleLeave,
+  filterEvents, getAttendanceStatus, getEarlyBirdEligible, getRecord, normalizeEvent, toggleLeave,
 } from "../src/v3/domain.js";
 
 const people = Array.from({ length: 10 }, (_, index) => ({
@@ -46,5 +46,12 @@ assert.deepEqual(filterEvents(filterFixtures, { module: "survey" }).map(({ id })
 assert.deepEqual(filterEvents(filterFixtures, { includeHistory: true }).map(({ id }) => id), ["E1"]);
 assert.deepEqual(filterEvents(filterFixtures, { source: "self", category: "digital", status: "upcoming" }).map(({ id }) => id), ["E2"]);
 assert.throws(() => filterEvents(filterFixtures, { dateFrom: "2026-08-31", dateTo: "2026-08-01" }), /INVALID_DATE_RANGE/);
+
+const normalized = normalizeEvent({ id: "SELF-1", source: "self", grouping: { enabled: true, targetSize: 4 }, survey: { url: "https://forms.example/x" } });
+assert.equal(normalized.grouping.mode, "automatic");
+assert.equal(normalized.grouping.targetSize, 4);
+assert.deepEqual(normalized.grouping.assignments, {});
+assert.equal(normalized.survey.timing, "after");
+assert.equal(normalized.rosterUrl, null);
 
 console.log("ok - Event Check-In v3 domain workflows");

@@ -1,3 +1,5 @@
+import { normalizeEvent } from "./domain.js";
+
 const l = (tw, cn, en, ja = tw) => ({ "zh-TW": tw, "zh-CN": cn, en, ja });
 
 const peopleSeed = [
@@ -26,7 +28,7 @@ export const roster = peopleSeed.map(([id, tw, cn, en, deptTw, deptCn, deptEn, e
 
 const modules = (values = {}) => ({ materials: false, survey: false, earlyBird: false, lottery: false, ...values });
 
-export const events = [
+const rawEvents = [
   {
     id: "LMS-2026-0717", lmsId: "LRN-8842", source: "lms", lifecycle: "activated", status: "live",
     title: l("跨部門領導力工作坊", "跨部门领导力工作坊", "Cross-functional Leadership Workshop", "部門横断リーダーシップ研修"),
@@ -92,10 +94,11 @@ export const events = [
     cancellationReason: l("因颱風影響延期", "因台风影响延期", "Postponed due to typhoon", "台風のため延期"),
   },
 ];
+export const events = rawEvents.map(normalizeEvent);
 
 function assignRoster(event, count = 12) {
   const people = roster.slice(0, count);
-  if (!event.grouping.enabled) return people.map((person) => ({ ...person, group: null }));
+  if (event.grouping.mode !== "automatic") return people.map((person) => ({ ...person, group: null }));
   const groups = Math.ceil(people.length / event.grouping.targetSize);
   return people.map((person, index) => ({ ...person, group: String.fromCharCode(65 + (index % groups)) }));
 }
