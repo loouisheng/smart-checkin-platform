@@ -166,17 +166,21 @@ export function AppProvider({ children }) {
     setBusy(true);
     await delay();
     const now = new Date().toISOString();
+    const people = rostersByEvent[eventId] || [];
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const results = personIds.map((personId) => ({ personId, status: emailPattern.test(people.find((person) => person.id === personId)?.email || "") ? "sent" : "failed", error: emailPattern.test(people.find((person) => person.id === personId)?.email || "") ? null : "INVALID_EMAIL" }));
     setDeliveries((current) => {
       const category = current[eventId]?.[type] || {};
       const nextCategory = { ...category };
-      personIds.forEach((personId) => {
-        nextCategory[personId] = { status: "sent", sentAt: now, count: (category[personId]?.count || 0) + 1 };
+      results.forEach((result) => {
+        const previous = category[result.personId] || {};
+        nextCategory[result.personId] = { status: result.status, sentAt: now, count: (previous.count || 0) + 1, error: result.error };
       });
       return { ...current, [eventId]: { ...(current[eventId] || {}), [type]: nextCategory } };
     });
     setBusy(false);
-    return personIds.length;
-  }, [events]);
+    return { results, successCount: results.filter((result) => result.status === "sent").length, failureCount: results.filter((result) => result.status === "failed").length };
+  }, [events, rostersByEvent]);
 
   const runLottery = useCallback((eventId) => {
     const event = events.find((item) => item.id === eventId);

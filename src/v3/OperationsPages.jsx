@@ -9,6 +9,7 @@ import { calculateKpis, getEarlyBirdEligible, getRecord } from "./domain.js";
 import { formatDate, localize } from "./i18n.js";
 import { AttendanceTable } from "./AttendanceTable.jsx";
 import { EmptyState, KpiCards, LoadingButton, PageHeader } from "./Shell.jsx";
+export { MaterialsPage } from "./MaterialsPage.jsx";
 
 export function ReportsPage() {
   const { events, rostersByEvent, attendanceByEvent, activeEventId, t } = useApp();
@@ -41,7 +42,7 @@ function DeliveryStatus({ record, t, language }) {
   return <div className={`delivery-record ${record.status}`}><span>{record.status === "sent" ? t("sent") : t("failed")}</span><small>{formatDate(record.sentAt, language)} · ×{record.count}</small></div>;
 }
 
-export function MaterialsPage() {
+function LegacyMaterialsPage() {
   const { events, activeEvent, activePeople, rostersByEvent, deliveries, sendDelivery, busy, language, t, selectActiveEvent, setNotice } = useApp();
   const materialEvents = events.filter((event) => event.modules.materials && event.status !== "cancelled");
   const event = materialEvents.find((item) => item.id === activeEvent?.id) || null;

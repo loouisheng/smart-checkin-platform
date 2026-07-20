@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import {
   applyAttendance, applyManualAssignments, assignGroups, buildAttendanceCsv, drawPrizeAssignments, evaluateAttendance,
   filterEvents, getAttendanceStatus, getEarlyBirdEligible, getRecord, isValidHttpUrl, normalizeEvent, toggleLeave,
-  parseRosterCsv, validateManualAssignments,
+  parseRosterCsv, retainFailedRecipients, toggleFilteredRecipients, toggleRecipientSelection, validateManualAssignments,
 } from "../src/v3/domain.js";
 
 const people = Array.from({ length: 10 }, (_, index) => ({
@@ -67,4 +67,16 @@ assert.throws(() => parseRosterCsv("employee_id,name\nE01,Ada\nE01,Grace"), /DUP
 assert.equal(isValidHttpUrl("https://lms.example/events/E1/roster"), true);
 assert.equal(isValidHttpUrl("javascript:alert(1)"), false);
 assert.equal(isValidHttpUrl(""), false);
+
+let selectedRecipients = toggleRecipientSelection(new Set(), "T1", true);
+assert.deepEqual([...selectedRecipients], ["T1"]);
+selectedRecipients = toggleRecipientSelection(selectedRecipients, "T1", false);
+assert.deepEqual([...selectedRecipients], []);
+selectedRecipients = toggleFilteredRecipients(new Set(["T3"]), ["T1", "T2"], true);
+assert.deepEqual([...selectedRecipients].sort(), ["T1", "T2", "T3"]);
+selectedRecipients = toggleFilteredRecipients(selectedRecipients, ["T1", "T2"], false);
+assert.deepEqual([...selectedRecipients], ["T3"]);
+const retainedRecipients = retainFailedRecipients(new Set(["T1", "T2"]), [{ personId: "T1", status: "sent" }, { personId: "T2", status: "failed" }]);
+assert.deepEqual([...retainedRecipients], ["T2"]);
+
 console.log("ok - Event Check-In v3 domain workflows");
