@@ -296,6 +296,7 @@ Object.assign(zhTW, { surveyTiming: "問卷發送時機", surveyBefore: "活動�
 Object.assign(zhCN, { surveyTiming: "问卷发送时机", surveyBefore: "活动前发送", surveyBeforeDesc: "活动创建后即可发送给所有报名者。", surveyAfter: "活动后发送", surveyAfterDesc: "活动结束时间到达后，只发送给成功签到者。", surveyLocked: "问卷尚未开放发送", surveyReady: "问卷可以发送", surveyUnlockAt: "开放时间", noSurveyRecipients: "目前没有符合资格的问卷收件人", registeredPeople: "位报名者", deliveryFailed: "发送失败" });
 Object.assign(ja, { surveyTiming: "アンケート送信時期", surveyBefore: "イベント前", surveyBeforeDesc: "作成後、すべての申込者に送信できます。", surveyAfter: "イベント後", surveyAfterDesc: "終了時刻後、チェックイン済みの参加者だけに送信します。", surveyLocked: "アンケート送信はまだ利用できません", surveyReady: "アンケートを送信できます", surveyUnlockAt: "利用開始", noSurveyRecipients: "対象となる回答者がいません", registeredPeople: "名の申込者", deliveryFailed: "送信に失敗しました" });
 Object.assign(en, { extension: "Extension", action: "Action" });
+Object.assign(zhCN, { language: "语言" });
 Object.assign(ja, { teamsUnavailable: "Teams アカウントがありません", leaveOverride: "休暇登録済みです。チェックインで上書きしますか？", missingLink: "必要なリンクがありません。", materialName: "教材名", materialUrl: "教材リンク", earlyQuota: "早期特典枠", earlyReward: "早期特典", prizeName: "賞品名", prizeQty: "数量", surveyUrl: "アンケートリンク" });
 for (const dictionary of [zhTW, zhCN, ja]) {
   for (const [key, value] of Object.entries(dictionary)) {
@@ -304,6 +305,11 @@ for (const dictionary of [zhTW, zhCN, ja]) {
 }
 
 const dictionaries = { "zh-TW": zhTW, "zh-CN": zhCN, en, ja };
+
+export function applyDocumentLanguage(documentLike, language) {
+  const supported = languages.some((item) => item.id === language) ? language : "zh-TW";
+  if (documentLike?.documentElement) documentLike.documentElement.lang = supported;
+}
 
 export function createTranslator(language) {
   return (key) => dictionaries[language]?.[key] ?? zhTW[key] ?? key;

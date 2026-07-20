@@ -4,7 +4,7 @@ import {
   filterEvents, getAttendanceStatus, getEarlyBirdEligible, getEventEndAt, getRecord, getSurveyRecipients, isValidHttpUrl, normalizeEvent, toggleLeave,
   parseRosterCsv, retainFailedRecipients, toggleFilteredRecipients, toggleRecipientSelection, validateManualAssignments,
 } from "../src/v3/domain.js";
-import { createTranslator } from "../src/v3/i18n.js";
+import { applyDocumentLanguage, createTranslator } from "../src/v3/i18n.js";
 
 const people = Array.from({ length: 10 }, (_, index) => ({
   id: `T${index + 1}`, name: { en: `Person ${index + 1}` }, department: { en: "People" },
@@ -101,5 +101,12 @@ for (const language of ["zh-TW", "zh-CN", "en", "ja"]) {
     assert.equal(/\?{2,}/.test(translate(key)), false);
   }
 }
+assert.equal(createTranslator("zh-CN")("language"), "语言");
+
+const fakeDocument = { documentElement: { lang: "" } };
+applyDocumentLanguage(fakeDocument, "ja");
+assert.equal(fakeDocument.documentElement.lang, "ja");
+applyDocumentLanguage(fakeDocument, "invalid");
+assert.equal(fakeDocument.documentElement.lang, "zh-TW");
 
 console.log("ok - Event Check-In v3 domain workflows");

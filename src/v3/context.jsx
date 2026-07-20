@@ -1,7 +1,7 @@
-import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { events as seedEvents, initialAttendance, lmsCatalog, roster, rostersByEvent as seedRosters } from "./data.js";
 import { applyAttendance, applyManualAssignments, assignGroups, canSendSurvey, drawPrizeAssignments, evaluateAttendance, getEarlyBirdEligible, getRecord, getSurveyRecipients, normalizeEvent, toggleLeave as updateLeave } from "./domain.js";
-import { createTranslator, localize } from "./i18n.js";
+import { applyDocumentLanguage, createTranslator, localize } from "./i18n.js";
 
 const AppContext = createContext(null);
 const clone = (value) => JSON.parse(JSON.stringify(value));
@@ -38,6 +38,8 @@ export function AppProvider({ children }) {
   const [busy, setBusy] = useState(false);
 
   const t = useMemo(() => createTranslator(language), [language]);
+  useEffect(() => applyDocumentLanguage(document, language), [language]);
+
   const activeEvent = events.find((event) => event.id === activeEventId) || null;
   const activePeople = activeEvent ? rostersByEvent[activeEvent.id] || [] : [];
   const activeRecords = activeEvent ? attendanceByEvent[activeEvent.id] || {} : {};
