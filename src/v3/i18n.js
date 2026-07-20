@@ -295,6 +295,8 @@ Object.assign(en, { surveyTiming: "Delivery timing", surveyBefore: "Before the e
 Object.assign(zhTW, { surveyTiming: "問卷發送時機", surveyBefore: "活動前發送", surveyBeforeDesc: "活動建立後即可寄給所有報名者。", surveyAfter: "活動後發送", surveyAfterDesc: "活動結束時間到達後，只寄給成功報到者。", surveyLocked: "問卷尚未開放發送", surveyReady: "問卷可以發送", surveyUnlockAt: "開放時間", noSurveyRecipients: "目前沒有符合資格的問卷收件人", registeredPeople: "位報名者", deliveryFailed: "發送失敗" });
 Object.assign(zhCN, { surveyTiming: "问卷发送时机", surveyBefore: "活动前发送", surveyBeforeDesc: "活动创建后即可发送给所有报名者。", surveyAfter: "活动后发送", surveyAfterDesc: "活动结束时间到达后，只发送给成功签到者。", surveyLocked: "问卷尚未开放发送", surveyReady: "问卷可以发送", surveyUnlockAt: "开放时间", noSurveyRecipients: "目前没有符合资格的问卷收件人", registeredPeople: "位报名者", deliveryFailed: "发送失败" });
 Object.assign(ja, { surveyTiming: "アンケート送信時期", surveyBefore: "イベント前", surveyBeforeDesc: "作成後、すべての申込者に送信できます。", surveyAfter: "イベント後", surveyAfterDesc: "終了時刻後、チェックイン済みの参加者だけに送信します。", surveyLocked: "アンケート送信はまだ利用できません", surveyReady: "アンケートを送信できます", surveyUnlockAt: "利用開始", noSurveyRecipients: "対象となる回答者がいません", registeredPeople: "名の申込者", deliveryFailed: "送信に失敗しました" });
+Object.assign(en, { extension: "Extension", action: "Action" });
+Object.assign(ja, { teamsUnavailable: "Teams アカウントがありません", leaveOverride: "休暇登録済みです。チェックインで上書きしますか？", missingLink: "必要なリンクがありません。", materialName: "教材名", materialUrl: "教材リンク", earlyQuota: "早期特典枠", earlyReward: "早期特典", prizeName: "賞品名", prizeQty: "数量", surveyUrl: "アンケートリンク" });
 for (const dictionary of [zhTW, zhCN, ja]) {
   for (const [key, value] of Object.entries(dictionary)) {
     if (typeof value === "string" && /\?{2,}/.test(value)) dictionary[key] = en[key] ?? key;

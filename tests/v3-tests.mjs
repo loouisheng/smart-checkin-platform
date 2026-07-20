@@ -4,6 +4,7 @@ import {
   filterEvents, getAttendanceStatus, getEarlyBirdEligible, getEventEndAt, getRecord, getSurveyRecipients, isValidHttpUrl, normalizeEvent, toggleLeave,
   parseRosterCsv, retainFailedRecipients, toggleFilteredRecipients, toggleRecipientSelection, validateManualAssignments,
 } from "../src/v3/domain.js";
+import { createTranslator } from "../src/v3/i18n.js";
 
 const people = Array.from({ length: 10 }, (_, index) => ({
   id: `T${index + 1}`, name: { en: `Person ${index + 1}` }, department: { en: "People" },
@@ -91,5 +92,14 @@ const beforeEvent = { ...afterEvent, survey: { ...afterEvent.survey, timing: "be
 assert.deepEqual(getSurveyRecipients(beforeEvent, people.slice(0, 3), {}).map((person) => person.id), ["T1", "T2", "T3"]);
 assert.equal(canSendSurvey({ ...beforeEvent, survey: { timing: "before", url: "" } }).code, "MISSING_SURVEY_LINK");
 assert.equal(canSendSurvey({ ...beforeEvent, status: "cancelled" }).code, "EVENT_UNAVAILABLE");
+
+const translationKeys = ["courseCreator", "courseDescription", "groupMode_manual", "openLmsRoster", "sendSelected", "surveyTiming", "surveyLocked", "extension", "action"];
+for (const language of ["zh-TW", "zh-CN", "en", "ja"]) {
+  const translate = createTranslator(language);
+  for (const key of translationKeys) {
+    assert.notEqual(translate(key), key);
+    assert.equal(/\?{2,}/.test(translate(key)), false);
+  }
+}
 
 console.log("ok - Event Check-In v3 domain workflows");
