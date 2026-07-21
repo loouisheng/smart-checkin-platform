@@ -3,14 +3,12 @@ import { AppProvider, useApp } from "./context.jsx";
 import { ErrorBoundary, Notice, Sidebar, Topbar } from "./Shell.jsx";
 import CheckinPage from "./CheckinPage.jsx";
 import EventManagementPage from "./EventManagementPage.jsx";
-import { EarlyBirdPage, HistoryPage, LotteryPage, MaterialsPage, ReportsPage, SurveyPage } from "./OperationsPages.jsx";
+import { EarlyBirdPage, LotteryPage, ReportsPage, SurveyPage } from "./OperationsPages.jsx";
 import "./styles.css";
 
 const pages = {
   checkin: CheckinPage,
-  history: HistoryPage,
   events: EventManagementPage,
-  materials: MaterialsPage,
   reports: ReportsPage,
   survey: SurveyPage,
   earlybird: EarlyBirdPage,

@@ -20,7 +20,12 @@ function parseCsvRow(line) {
 
 const localized = (value) => ({ "zh-TW": value, "zh-CN": value, en: value, ja: value });
 
-export function parseRosterCsv(text) {
+export function csvCell(value) {
+  const valueText = value == null ? "" : String(value);
+  return /[",\n]/.test(valueText) ? `"${valueText.replaceAll('"', '""')}"` : valueText;
+}
+
+export function parseRosterCsv(text, { requireGroup = false } = {}) {
   const lines = String(text || "").replace(/^\uFEFF/, "").split(/\r?\n/).filter((line) => line.trim());
   if (lines.length < 2) throw new Error("ROSTER_EMPTY");
   const headers = parseCsvRow(lines[0]).map((header) => header.trim().toLowerCase());
@@ -28,6 +33,8 @@ export function parseRosterCsv(text) {
   const nameIndex = headers.indexOf("name");
   if (employeeIndex < 0 || nameIndex < 0) throw new Error("ROSTER_REQUIRED_COLUMNS");
   const indexOf = (key) => headers.indexOf(key);
+  const groupIndex = indexOf("group");
+  if (requireGroup && groupIndex < 0) throw new Error("ROSTER_GROUP_COLUMN_REQUIRED");
   const seen = new Set();
   const people = lines.slice(1).map((line) => {
     const cells = parseCsvRow(line);
@@ -36,15 +43,16 @@ export function parseRosterCsv(text) {
     if (!id || !name) throw new Error("ROSTER_REQUIRED_VALUE");
     if (seen.has(id)) throw new Error("DUPLICATE_EMPLOYEE_ID");
     seen.add(id);
-    const department = String(cells[indexOf("department")] || "").trim();
+    const group = groupIndex < 0 ? "" : String(cells[groupIndex] || "").trim();
+    if (requireGroup && !group) throw new Error("ROSTER_GROUP_VALUE_REQUIRED");
     return {
       id,
       name: localized(name),
-      department: localized(department),
+      department: localized(String(cells[indexOf("department")] || "").trim()),
       email: String(cells[indexOf("email")] || "").trim(),
       teamsUrl: String(cells[indexOf("teams_url")] || "").trim(),
       extension: String(cells[indexOf("extension")] || "").trim(),
-      group: null,
+      group: group || null,
       registered: true,
       leaveStatus: false,
     };
@@ -52,13 +60,34 @@ export function parseRosterCsv(text) {
   return { headers, people };
 }
 
-export function validateManualAssignments(people, assignments = {}) {
-  const unassignedIds = (people || []).filter((person) => !String(assignments[person.id] || "").trim()).map((person) => person.id);
-  return { ok: unassignedIds.length === 0, unassignedIds };
+export const rosterColumns = ["employee_id", "name", "department", "email", "teams_url", "extension"];
+
+export function buildRosterTemplate(withGroup = false) {
+  const headers = [...rosterColumns, ...(withGroup ? ["group"] : [])];
+  const rows = [
+    ["T001", "Alice Chen", "People", "alice.chen@example.com", "https://teams.microsoft.com/l/chat/0/0?users=alice.chen@example.com", "2181", "A"],
+    ["T002", "Brian Lin", "Product", "brian.lin@example.com", "https://teams.microsoft.com/l/chat/0/0?users=brian.lin@example.com", "2264", "B"],
+  ].map((row) => (withGroup ? row : row.slice(0, rosterColumns.length)));
+  return `\uFEFF${[headers, ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n")}`;
 }
 
-export function applyManualAssignments(people, assignments = {}) {
-  return (people || []).map((person) => ({ ...person, group: String(assignments[person.id] || "").trim() || null }));
+export function buildRosterCsv(people, { language = "zh-TW", localize = (value) => value, withGroup = false } = {}) {
+  const headers = [...rosterColumns, ...(withGroup ? ["group"] : [])];
+  const rows = (people || []).map((person) => {
+    const row = [person.id, localize(person.name, language), localize(person.department, language), person.email || "", person.teamsUrl || "", person.extension || ""];
+    return withGroup ? [...row, person.group || ""] : row;
+  });
+  return `\uFEFF${[headers, ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n")}`;
+}
+
+export function applyRosterGrouping(people, grouped) {
+  return (people || []).map((person) => ({ ...person, group: grouped ? person.group || null : null }));
+}
+
+export function validateRosterGrouping(people, grouped) {
+  if (!grouped) return { ok: true, missingIds: [] };
+  const missingIds = (people || []).filter((person) => !String(person.group || "").trim()).map((person) => person.id);
+  return { ok: missingIds.length === 0, missingIds };
 }
 
 export function isValidHttpUrl(value) {

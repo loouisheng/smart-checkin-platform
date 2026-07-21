@@ -1,7 +1,0 @@
-.materials-toolbar{flex-wrap:wrap}
-.select-all-recipients{display:flex;align-items:center;gap:7px;color:#475467;font-size:9px;font-weight:700;white-space:nowrap}
-.recipient-checkbox,.select-all-recipients input{width:16px;height:16px;accent-color:#2563eb;cursor:pointer}
-.materials-page .delivery-list article{padding-left:14px}
-.materials-page .delivery-record.failed span{color:#b42318}
-.materials-page .delivery-record.failed small:last-child{color:#b42318}
-@media(max-width:680px){.materials-toolbar .search-field{order:-1;width:100%}.materials-toolbar .primary-button{width:100%}.materials-page .delivery-list article{align-items:flex-start}.materials-page .recipient-checkbox{margin-top:8px}}

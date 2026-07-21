@@ -1,22 +1,38 @@
-export { applyManualAssignments, isValidHttpUrl, parseRosterCsv, validateManualAssignments } from "./roster-domain.js";
+import { csvCell } from "./roster-domain.js";
+
+export {
+  applyRosterGrouping, buildRosterCsv, buildRosterTemplate, csvCell, isValidHttpUrl, parseRosterCsv, rosterColumns, validateRosterGrouping,
+} from "./roster-domain.js";
 export { retainFailedRecipients, toggleFilteredRecipients, toggleRecipientSelection } from "./delivery-domain.js";
 export { canSendSurvey, getEventEndAt, getSurveyRecipients } from "./survey-domain.js";
 
-export function filterEvents(events, filters = {}) {
-  const { query = "", source = "all", category = "all", status = "all", learningMode = "all", month = "", dateFrom = "", dateTo = "", module, includeHistory = false } = filters;
-  if (dateFrom && dateTo && dateFrom > dateTo) throw new Error("INVALID_DATE_RANGE");
+export function toIsoDate(value = new Date()) {
+  const date = value instanceof Date ? value : new Date(value);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
 
+export function todayIso() {
+  return toIsoDate(new Date());
+}
+
+export function shiftIsoDate(iso, days) {
+  const date = new Date(`${iso}T00:00:00`);
+  date.setDate(date.getDate() + days);
+  return toIsoDate(date);
+}
+
+export function filterEvents(events, filters = {}) {
+  const { query = "", source = "all", category = "all", status = "all", learningMode = "all", date = "", module, ownerId } = filters;
   const needle = query.trim().toLowerCase();
   const filtered = (events || []).filter((event) => {
-    if (includeHistory ? !["completed", "cancelled"].includes(event.status) : event.status === "cancelled") return false;
+    if (event.status === "cancelled") return false;
+    if (ownerId && event.ownerId !== ownerId) return false;
     if (needle && !Object.values(event.title || {}).join(" ").toLowerCase().includes(needle)) return false;
     if (source !== "all" && source && event.source !== source) return false;
     if (category !== "all" && category && event.category !== category) return false;
     if (status !== "all" && status && event.status !== status) return false;
     if (learningMode !== "all" && learningMode && event.learningMode !== learningMode) return false;
-    if (month && !String(event.date || "").startsWith(month)) return false;
-    if (dateFrom && event.date < dateFrom) return false;
-    if (dateTo && event.date > dateTo) return false;
+    if (date && event.date !== date) return false;
     if (module && !event.modules?.[module]) return false;
     return true;
   });
@@ -26,23 +42,31 @@ export function filterEvents(events, filters = {}) {
 
 export function normalizeEvent(event) {
   const grouping = event.grouping || {};
-  const mode = grouping.mode || (grouping.enabled ? "automatic" : "none");
   const localizedEmpty = { "zh-TW": "", "zh-CN": "", en: "", ja: "" };
 
   return {
     ...event,
-    creator: event.creator || event.organizer || localizedEmpty,
+    creator: event.creator || localizedEmpty,
+    contactExtension: event.contactExtension || "",
     description: event.description || localizedEmpty,
     rosterUrl: event.rosterUrl || null,
-    grouping: {
-      ...grouping,
-      mode,
-      enabled: mode !== "none",
-      targetSize: mode === "automatic" ? Number(grouping.targetSize) || null : grouping.targetSize || null,
-      assignments: { ...(grouping.assignments || {}) },
-    },
-    survey: event.survey ? { ...event.survey, timing: event.survey.timing || "after" } : null,
+    grouping: { enabled: Boolean(grouping.enabled) },
+    survey: event.survey ? { url: event.survey.url, autoSend: event.survey.autoSend !== false } : null,
+    lottery: event.lottery ? { prizes: normalizePrizes(event.lottery.prizes) } : null,
   };
+}
+
+export function normalizePrizes(prizes) {
+  return (prizes || [])
+    .filter((prize) => String(prize?.name ?? "").trim() || typeof prize?.name === "object")
+    .map((prize, index) => ({ id: prize.id || `p${index + 1}`, name: prize.name, quantity: Math.max(1, Number(prize.quantity) || 1) }));
+}
+
+export function resizePrizeList(prizes, count, blank = { name: "", quantity: 1 }) {
+  const target = Math.min(12, Math.max(1, Number(count) || 1));
+  const next = (prizes || []).slice(0, target);
+  while (next.length < target) next.push({ ...blank });
+  return next;
 }
 
 export function assignGroups(people, targetSize) {
@@ -109,11 +133,6 @@ export function drawPrizeAssignments(people, records, prizes, random = Math.rand
     assignments.push({ person: candidates.splice(winnerIndex, 1)[0], prize });
   }
   return { assignments, eligibleCount: pool.length, unassignedCount: (prizes || []).reduce((sum, prize) => sum + Number(prize.quantity || 0), 0) - assignments.length };
-}
-
-function csvCell(value) {
-  const valueText = value == null ? "" : String(value);
-  return /[",\n]/.test(valueText) ? `"${valueText.replaceAll('"', '""')}"` : valueText;
 }
 
 export function buildAttendanceCsv({ event, people, records, language, localize, statusLabel }) {

@@ -145,7 +145,7 @@ Object.assign(zhTW, {
   materialName: "教材名稱", materialUrl: "教材連結", surveyUrl: "問卷連結", earlyQuota: "早鳥名額", earlyReward: "早鳥獎勵", prizeName: "獎項名稱", prizeQty: "數量",
   saveEvent: "儲存並啟用", importEvent: "加入此 LMS 活動", readonly: "此資料由 LMS 提供，無法在此編輯。", cancelEvent: "取消活動", cancelReason: "請填寫取消原因",
   materialsTitle: "教材管理", materialsDesc: "名單建立後即寄送教材；如有同仁未收到，可個別或批次重寄。", resend: "重寄", resendAll: "批次重寄全部", sent: "已寄送", notSent: "尚未寄送", failed: "寄送失敗",
-  surveyTitle: "問卷發送", surveyDesc: "活動結束後自動寄送問卷給曾成功報到的同仁，也可手動發送。", send: "發送", sendAll: "批次發送", autoScheduled: "已排程於活動結束後自動發送",
+  surveyTitle: "問卷發送", surveyDesc: "活動結束後自動寄送問卷給曾成功報到的同仁，也可手動發送。", send: "發送", sendAll: "全部發送", autoScheduled: "已排程於活動結束後自動發送",
   earlyTitle: "早鳥福利", earlyDesc: "資格僅依成功報到時間排序，不採用報名順序。", eligible: "符合資格", issued: "已發放", issue: "發放", issueAll: "全部發放",
   lotteryTitle: "活動抽獎", lotteryDesc: "一次完成所有獎項分配，且同一位參加者不會重複中獎。", draw: "開始抽獎", winners: "中獎名單", unassigned: "未分配獎項",
   reportsTitle: "數據報表", reportsDesc: "即時掌握出勤狀況，並快速聯絡尚未到場的同仁。", liveRoster: "即時名單", markLeave: "標記請假", clearLeave: "取消請假",
@@ -173,7 +173,7 @@ Object.assign(zhCN, {
   basicInfo: "基本资料", modules: "模块化功能", grouping: "需要分组", groupSize: "每组人数", eventName: "活动名称", date: "活动日期", startTime: "开始时间", endTime: "结束时间",
   saveEvent: "保存并启用", readonly: "此资料由 LMS 提供，无法在此编辑。", cancelEvent: "取消活动", cancelReason: "请填写取消原因",
   materialsTitle: "教材管理", materialsDesc: "名单建立后即发送教材；如有同事未收到，可单独或批量重发。", resend: "重发", resendAll: "批量重发全部", sent: "已发送", notSent: "尚未发送", failed: "发送失败",
-  surveyTitle: "问卷发送", surveyDesc: "活动结束后自动发送问卷给曾成功签到的同事，也可手动发送。", send: "发送", sendAll: "批量发送",
+  surveyTitle: "问卷发送", surveyDesc: "活动结束后自动发送问卷给曾成功签到的同事，也可手动发送。", send: "发送", sendAll: "全部发送",
   reportsTitle: "数据报表", reportsDesc: "实时掌握出勤情况，并快速联系尚未到场的同事。", liveRoster: "实时名单", markLeave: "标记请假", clearLeave: "取消请假",
   historyTitle: "历史记录", historyDesc: "查看已结束与已取消活动的签到、签退及请假记录。", selectHistory: "选择历史活动",
   systemOnline: "系统连接正常", successCheckin: "签到成功", successCheckout: "签退成功", duplicateCheckin: "此人员已完成签到", duplicateCheckout: "此人员已完成签退",
@@ -199,7 +199,7 @@ Object.assign(ja, {
   eventName: "イベント名", date: "開催日", startTime: "開始時刻", endTime: "終了時刻", category: "イベント種類", learningMode: "受講形式", audience: "対象者",
   saveEvent: "保存して有効化", readonly: "このデータは LMS 提供のため編集できません。", cancelEvent: "イベントを中止", cancelReason: "中止理由を入力してください",
   materialsTitle: "教材管理", materialsDesc: "必要に応じて教材を個別または一括で再送できます。", resend: "再送", resendAll: "全員に再送", sent: "送信済み", notSent: "未送信", failed: "送信失敗",
-  surveyTitle: "アンケート送信", surveyDesc: "終了時刻後、チェックイン済みの参加者に自動送信します。", send: "送信", sendAll: "一括送信", autoScheduled: "イベント終了後の自動送信を予約済み",
+  surveyTitle: "アンケート送信", surveyDesc: "終了時刻後、チェックイン済みの参加者に自動送信します。", send: "送信", sendAll: "全員に送信", autoScheduled: "イベント終了後の自動送信を予約済み",
   earlyTitle: "早期特典", earlyDesc: "チェックイン成功時刻の早い順に対象者を決定します。", eligible: "対象", issued: "配布済み", issue: "配布", issueAll: "すべて配布",
   lotteryTitle: "イベント抽選", lotteryDesc: "チェックイン済み参加者に賞品を重複なしで割り当てます。", draw: "抽選開始", winners: "当選者", unassigned: "未割当の賞品",
   reportsTitle: "データレポート", reportsDesc: "出席状況をリアルタイムで確認し、未到着の参加者へ連絡できます。", liveRoster: "リアルタイム名簿", markLeave: "休暇に設定", clearLeave: "休暇を解除",
@@ -279,24 +279,120 @@ Object.assign(zhTW, { filters: "篩選", eventMonth: "活動月份", allMonths: 
 Object.assign(zhCN, { filters: "筛选", eventMonth: "活动月份", allMonths: "所有月份", dateFrom: "开始日期", dateTo: "结束日期", eventsUnit: "个活动", clearFilters: "清除条件", invalidDateRange: "开始日期不能晚于结束日期。" });
 Object.assign(ja, { filters: "絞り込み", eventMonth: "開催月", allMonths: "すべての月", dateFrom: "開始日", dateTo: "終了日", eventsUnit: "件", clearFilters: "条件をクリア", invalidDateRange: "開始日は終了日より前にしてください。" });
 
-Object.assign(en, { courseCreator: "Course creator", courseDescription: "Course description" });
-Object.assign(zhTW, { courseCreator: "課程建立人", courseDescription: "課程描述" });
-Object.assign(zhCN, { courseCreator: "课程创建人", courseDescription: "课程描述" });
-Object.assign(ja, { courseCreator: "コース作成者", courseDescription: "コース説明" });
-Object.assign(en, { groupMode_none: "No grouping", groupMode_noneDesc: "Do not assign participant groups.", groupMode_automatic: "Automatic balanced grouping", groupMode_automaticDesc: "Distribute participants evenly by target size.", groupMode_manual: "Manual grouping", groupMode_manualDesc: "HR assigns a group to each participant.", groupNamePlaceholder: "Group name", manualGroupingIncomplete: "Assign a group to every participant before creating the event.", lmsRosterExternalDesc: "The participant roster is managed in LMS.", openLmsRoster: "View / manage roster in LMS", invalidLmsRosterUrl: "LMS did not provide a valid roster link.", lmsGroupingManagedExternally: "Grouping is synchronized from LMS. Make changes in LMS." });
-Object.assign(zhTW, { groupMode_none: "不分組", groupMode_noneDesc: "不指定參加者組別。", groupMode_automatic: "自動平均分組", groupMode_automaticDesc: "依每組人數平均分配。", groupMode_manual: "手動分組", groupMode_manualDesc: "由 HR 指定每位參加者的組別。", groupNamePlaceholder: "輸入組別", manualGroupingIncomplete: "請先為每位參加者指定組別，再新增活動。", lmsRosterExternalDesc: "參加者名單由 LMS 管理。", openLmsRoster: "前往 LMS 查看／管理名單", invalidLmsRosterUrl: "LMS 未提供有效的名單連結。", lmsGroupingManagedExternally: "分組資料由 LMS 同步，如需調整請前往 LMS。" });
-Object.assign(zhCN, { groupMode_none: "不分组", groupMode_noneDesc: "不指定参与者组别。", groupMode_automatic: "自动平均分组", groupMode_automaticDesc: "按每组人数平均分配。", groupMode_manual: "手动分组", groupMode_manualDesc: "由 HR 指定每位参与者的组别。", groupNamePlaceholder: "输入组别", manualGroupingIncomplete: "请先为每位参与者指定组别，再新增活动。", lmsRosterExternalDesc: "参与者名单由 LMS 管理。", openLmsRoster: "前往 LMS 查看／管理名单", invalidLmsRosterUrl: "LMS 未提供有效的名单链接。", lmsGroupingManagedExternally: "分组数据由 LMS 同步，如需调整请前往 LMS。" });
-Object.assign(ja, { groupMode_none: "グループなし", groupMode_noneDesc: "参加者をグループ分けしません。", groupMode_automatic: "自動均等グループ", groupMode_automaticDesc: "設定人数に基づいて均等に分けます。", groupMode_manual: "手動グループ", groupMode_manualDesc: "HR が各参加者のグループを指定します。", groupNamePlaceholder: "グループ名", manualGroupingIncomplete: "すべての参加者にグループを指定してください。", lmsRosterExternalDesc: "参加者名簿は LMS で管理されます。", openLmsRoster: "LMS で名簿を表示／管理", invalidLmsRosterUrl: "有効な LMS 名簿リンクがありません。", lmsGroupingManagedExternally: "グループ情報は LMS から同期されます。変更は LMS で行ってください。" });
 Object.assign(en, { selectFiltered: "Select filtered results", sendSelected: "Send to selected", selectRecipient: "Select", partialDelivery: "Partially completed", invalidEmail: "Invalid email", missingEmail: "No email" });
 Object.assign(zhTW, { selectFiltered: "勾選篩選結果", sendSelected: "發送給已選人員", selectRecipient: "選取", partialDelivery: "部分發送完成", invalidEmail: "Email 格式無效", missingEmail: "沒有 Email" });
 Object.assign(zhCN, { selectFiltered: "勾选筛选结果", sendSelected: "发送给已选人员", selectRecipient: "选择", partialDelivery: "部分发送完成", invalidEmail: "Email 格式无效", missingEmail: "没有 Email" });
 Object.assign(ja, { selectFiltered: "絞り込み結果を選択", sendSelected: "選択した人に送信", selectRecipient: "選択", partialDelivery: "一部送信完了", invalidEmail: "メールアドレスが無効です", missingEmail: "メールなし" });
-Object.assign(en, { surveyTiming: "Delivery timing", surveyBefore: "Before the event", surveyBeforeDesc: "Can be sent to every registrant after the event is created.", surveyAfter: "After the event", surveyAfterDesc: "Unlocks at the scheduled end time and sends only to checked-in attendees.", surveyLocked: "Survey delivery is not available yet", surveyReady: "Survey delivery is available", surveyUnlockAt: "Available at", noSurveyRecipients: "No eligible survey recipients", registeredPeople: "registrants", deliveryFailed: "Delivery failed" });
-Object.assign(zhTW, { surveyTiming: "問卷發送時機", surveyBefore: "活動前發送", surveyBeforeDesc: "活動建立後即可寄給所有報名者。", surveyAfter: "活動後發送", surveyAfterDesc: "活動結束時間到達後，只寄給成功報到者。", surveyLocked: "問卷尚未開放發送", surveyReady: "問卷可以發送", surveyUnlockAt: "開放時間", noSurveyRecipients: "目前沒有符合資格的問卷收件人", registeredPeople: "位報名者", deliveryFailed: "發送失敗" });
-Object.assign(zhCN, { surveyTiming: "问卷发送时机", surveyBefore: "活动前发送", surveyBeforeDesc: "活动创建后即可发送给所有报名者。", surveyAfter: "活动后发送", surveyAfterDesc: "活动结束时间到达后，只发送给成功签到者。", surveyLocked: "问卷尚未开放发送", surveyReady: "问卷可以发送", surveyUnlockAt: "开放时间", noSurveyRecipients: "目前没有符合资格的问卷收件人", registeredPeople: "位报名者", deliveryFailed: "发送失败" });
-Object.assign(ja, { surveyTiming: "アンケート送信時期", surveyBefore: "イベント前", surveyBeforeDesc: "作成後、すべての申込者に送信できます。", surveyAfter: "イベント後", surveyAfterDesc: "終了時刻後、チェックイン済みの参加者だけに送信します。", surveyLocked: "アンケート送信はまだ利用できません", surveyReady: "アンケートを送信できます", surveyUnlockAt: "利用開始", noSurveyRecipients: "対象となる回答者がいません", registeredPeople: "名の申込者", deliveryFailed: "送信に失敗しました" });
+Object.assign(en, { surveyLocked: "Survey delivery is not available yet", surveyReady: "Survey delivery is available", surveyUnlockAt: "Available at", noSurveyRecipients: "No eligible survey recipients", deliveryFailed: "Delivery failed" });
+Object.assign(zhTW, { surveyLocked: "問卷尚未開放發送", surveyReady: "問卷可以發送", surveyUnlockAt: "開放時間", noSurveyRecipients: "目前沒有符合資格的問卷收件人", deliveryFailed: "發送失敗" });
+Object.assign(zhCN, { surveyLocked: "问卷尚未开放发送", surveyReady: "问卷可以发送", surveyUnlockAt: "开放时间", noSurveyRecipients: "目前没有符合资格的问卷收件人", deliveryFailed: "发送失败" });
+Object.assign(ja, { surveyLocked: "アンケート送信はまだ利用できません", surveyReady: "アンケートを送信できます", surveyUnlockAt: "利用開始", noSurveyRecipients: "対象となる回答者がいません", deliveryFailed: "送信に失敗しました" });
 Object.assign(en, { extension: "Extension", action: "Action" });
 Object.assign(zhCN, { language: "语言" });
+
+/* wording, ownership, single-date filtering, roster preview, modular prizes */
+Object.assign(en, {
+  capacity: "Participants", organizer: "Contact person", eventCreator: "Event creator", eventDescription: "Event description",
+  grouping: "Event grouping", groupingToggle: "Group participants", groupingToggleDesc: "When enabled, the participant roster must include a group column and be grouped before upload.",
+  groupingOn: "Grouping enabled", groupingOff: "No grouping",
+  filterDate: "Event date", allDates: "All dates", today: "Today",
+  rosterDesc: "Use the demo roster or upload a CSV. Uploaded data can be previewed and downloaded.",
+  lmsRosterDesc: "The LMS roster is loaded into this system. Preview it, download it, or upload a replacement.",
+  lmsRosterLoaded: "LMS roster loaded", demoRosterFull: "Demo roster (12 people)", replaceRoster: "Upload another roster",
+  downloadRoster: "Download roster", rosterPreview: "Roster preview", rosterEmptyPreview: "No participants yet",
+  rosterGroupColumnRequired: "Grouping is enabled, so the CSV must include a group column.",
+  rosterGroupValueRequired: "Grouping is enabled, so every participant needs a group value.",
+  rosterGroupMissing: "Some participants have no group yet. Complete the roster before creating the event.",
+  ungrouped: "Ungrouped",
+  prizeCount: "Number of prizes", addPrize: "Add prize", removePrize: "Remove prize", prizeQty: "Winners to draw",
+  prizeSetupDesc: "Decide how many prizes this event has, then name each prize and set how many winners to draw.",
+  prizeRequired: "Enter a name and a winner count for every prize.",
+  drawAgain: "Draw again", lotteryReady: "Ready to draw",
+  attendanceMode: "Attendance mode", modeCheckinActive: "Check-in mode", modeCheckoutActive: "Check-out mode",
+  checkinModeHint: "Tap a card or search a person to check them in.", checkoutModeHint: "Tap a card or search a person to check them out.",
+  surveyAfterOnly: "Sent after the event ends",
+});
+Object.assign(zhTW, {
+  capacity: "參加人數", organizer: "聯絡人", eventCreator: "活動建立人", eventDescription: "活動說明",
+  grouping: "活動分組", groupingToggle: "是否需要分組", groupingToggleDesc: "啟用後，參加者名單需包含「組別」欄位，請於上傳前先分好組。",
+  groupingOn: "需要分組", groupingOff: "不分組",
+  filterDate: "活動日期", allDates: "所有日期", today: "今天",
+  rosterDesc: "使用模擬名單或上傳 CSV 名單，上傳後可預覽與下載。",
+  lmsRosterDesc: "LMS 名單已載入系統，可預覽、下載，也可上傳新名單覆蓋。",
+  lmsRosterLoaded: "已載入 LMS 名單", demoRosterFull: "模擬名單（12 人）", replaceRoster: "重新上傳名單",
+  downloadRoster: "下載名單", rosterPreview: "名單預覽", rosterEmptyPreview: "目前沒有參加者資料",
+  rosterGroupColumnRequired: "已啟用分組，CSV 必須包含 group 欄位。",
+  rosterGroupValueRequired: "已啟用分組，每位參加者都必須填寫組別。",
+  rosterGroupMissing: "尚有參加者未填寫組別，請補齊後再建立活動。",
+  ungrouped: "未分組",
+  prizeCount: "獎項數量", addPrize: "新增獎項", removePrize: "移除獎項", prizeQty: "抽出人數",
+  prizeSetupDesc: "自行決定本場活動要有幾個獎項，再填寫每個獎項的名稱與抽出人數。",
+  prizeRequired: "請填寫每個獎項的名稱與抽出人數。",
+  drawAgain: "重新抽獎", lotteryReady: "準備抽獎",
+  attendanceMode: "報到模式", modeCheckinActive: "目前為報到模式", modeCheckoutActive: "目前為簽退模式",
+  checkinModeHint: "感應識別卡或搜尋人員即可完成報到。", checkoutModeHint: "感應識別卡或搜尋人員即可完成簽退。",
+  surveyAfterOnly: "活動結束後發送",
+});
+Object.assign(zhCN, {
+  capacity: "参加人数", organizer: "联系人", eventCreator: "活动创建人", eventDescription: "活动说明",
+  grouping: "活动分组", groupingToggle: "是否需要分组", groupingToggleDesc: "启用后，参与者名单需包含「组别」字段，请于上传前先分好组。",
+  groupingOn: "需要分组", groupingOff: "不分组",
+  filterDate: "活动日期", allDates: "所有日期", today: "今天",
+  rosterDesc: "使用模拟名单或上传 CSV 名单，上传后可预览与下载。",
+  lmsRosterDesc: "LMS 名单已载入系统，可预览、下载，也可上传新名单覆盖。",
+  lmsRosterLoaded: "已载入 LMS 名单", demoRosterFull: "模拟名单（12 人）", replaceRoster: "重新上传名单",
+  downloadRoster: "下载名单", rosterPreview: "名单预览", rosterEmptyPreview: "目前没有参与者数据",
+  rosterGroupColumnRequired: "已启用分组，CSV 必须包含 group 字段。",
+  rosterGroupValueRequired: "已启用分组，每位参与者都必须填写组别。",
+  rosterGroupMissing: "尚有参与者未填写组别，请补齐后再创建活动。",
+  ungrouped: "未分组",
+  prizeCount: "奖项数量", addPrize: "新增奖项", removePrize: "移除奖项", prizeQty: "抽出人数",
+  prizeSetupDesc: "自行决定本场活动要有几个奖项，再填写每个奖项的名称与抽出人数。",
+  prizeRequired: "请填写每个奖项的名称与抽出人数。",
+  drawAgain: "重新抽奖", lotteryReady: "准备抽奖",
+  attendanceMode: "签到模式", modeCheckinActive: "目前为签到模式", modeCheckoutActive: "目前为签退模式",
+  checkinModeHint: "感应识别卡或搜索人员即可完成签到。", checkoutModeHint: "感应识别卡或搜索人员即可完成签退。",
+  surveyAfterOnly: "活动结束后发送",
+});
+Object.assign(ja, {
+  capacity: "参加人数", organizer: "連絡担当者", eventCreator: "イベント作成者", eventDescription: "イベント説明",
+  grouping: "グループ分け", groupingToggle: "グループ分けの要否", groupingToggleDesc: "有効にすると、参加者名簿に「group」列が必要です。アップロード前にグループを決めてください。",
+  groupingOn: "グループあり", groupingOff: "グループなし",
+  filterDate: "開催日", allDates: "すべての日付", today: "今日",
+  rosterDesc: "デモ名簿を使うか、CSV をアップロードします。アップロード後にプレビューとダウンロードができます。",
+  lmsRosterDesc: "LMS 名簿をシステムに取り込みました。プレビュー・ダウンロード・再アップロードができます。",
+  lmsRosterLoaded: "LMS 名簿を読み込み済み", demoRosterFull: "デモ名簿（12 名）", replaceRoster: "名簿を再アップロード",
+  downloadRoster: "名簿をダウンロード", rosterPreview: "名簿プレビュー", rosterEmptyPreview: "参加者データがありません",
+  rosterGroupColumnRequired: "グループ分けが有効です。CSV に group 列が必要です。",
+  rosterGroupValueRequired: "グループ分けが有効です。全参加者にグループを入力してください。",
+  rosterGroupMissing: "グループ未設定の参加者がいます。入力してからイベントを作成してください。",
+  ungrouped: "未設定",
+  prizeCount: "賞品の数", addPrize: "賞品を追加", removePrize: "削除", prizeQty: "当選人数",
+  prizeSetupDesc: "賞品の数を決めてから、各賞品の名称と当選人数を入力します。",
+  prizeRequired: "各賞品の名称と当選人数を入力してください。",
+  drawAgain: "もう一度抽選", lotteryReady: "抽選の準備完了",
+  attendanceMode: "受付モード", modeCheckinActive: "現在チェックインモード", modeCheckoutActive: "現在チェックアウトモード",
+  checkinModeHint: "カードをかざすか参加者を検索してチェックインします。", checkoutModeHint: "カードをかざすか参加者を検索してチェックアウトします。",
+  surveyAfterOnly: "イベント終了後に送信",
+});
+
+/* contact = creator, module names aligned with the navigation, survey attendance summary */
+Object.assign(en, {
+  contactExtension: "Contact extension", contactExtensionHint: "Filled in automatically from the event creator's extension.",
+  survey: "Survey delivery", lottery: "Event lottery", surveyRecipients: "Survey recipients",
+});
+Object.assign(zhTW, {
+  contactExtension: "聯絡分機", contactExtensionHint: "自動帶入活動建立人的分機號碼。",
+  survey: "問卷發送", lottery: "活動抽獎", surveyRecipients: "可發送人數",
+});
+Object.assign(zhCN, {
+  contactExtension: "联系分机", contactExtensionHint: "自动带入活动创建人的分机号码。",
+  survey: "问卷发送", lottery: "活动抽奖", surveyRecipients: "可发送人数",
+});
+Object.assign(ja, {
+  contactExtension: "連絡内線", contactExtensionHint: "イベント作成者の内線番号を自動で入力します。",
+  survey: "アンケート送信", lottery: "イベント抽選", surveyRecipients: "送信対象",
+});
 Object.assign(ja, { teamsUnavailable: "Teams アカウントがありません", leaveOverride: "休暇登録済みです。チェックインで上書きしますか？", missingLink: "必要なリンクがありません。", materialName: "教材名", materialUrl: "教材リンク", earlyQuota: "早期特典枠", earlyReward: "早期特典", prizeName: "賞品名", prizeQty: "数量", surveyUrl: "アンケートリンク" });
 for (const dictionary of [zhTW, zhCN, ja]) {
   for (const [key, value] of Object.entries(dictionary)) {

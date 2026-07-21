@@ -1,21 +1,19 @@
 import { Component, useEffect, useMemo, useRef, useState } from "react";
 import {
-  BarChart3, Bell, BookOpenCheck, CalendarDays, Check, ChevronDown, ClipboardList as ClipboardClock, Gift, Globe2,
-  History, Languages, Menu, ScanLine, Sparkles, X,
+  BarChart3, Bell, CalendarDays, Check, ChevronDown, ClipboardList as ClipboardClock, Gift, Globe2,
+  Languages, Menu, ScanLine, Sparkles, X,
 } from "lucide-react";
 import { useApp } from "./context.jsx";
 import { languages, localize } from "./i18n.js";
 
 const functionalityItems = [
   { id: "checkin", key: "navCheckin", icon: ScanLine },
-  { id: "history", key: "navHistory", icon: History },
 ];
 
 export function Sidebar({ mobileOpen, onMobileClose }) {
   const { page, navigate, t, activeEvent } = useApp();
   const managementItems = [
     { id: "events", key: "navEvents", icon: CalendarDays },
-    activeEvent?.modules?.materials && { id: "materials", key: "navMaterials", icon: BookOpenCheck },
     activeEvent?.modules?.earlyBird && { id: "earlybird", key: "navEarlyBird", icon: Gift },
     activeEvent?.modules?.lottery && { id: "lottery", key: "navLottery", icon: Sparkles },
     activeEvent?.modules?.survey && { id: "survey", key: "navSurvey", icon: ClipboardClock },
@@ -47,7 +45,7 @@ export function Sidebar({ mobileOpen, onMobileClose }) {
 }
 
 export function Topbar({ onMenu }) {
-  const { language, setLanguage, t } = useApp();
+  const { language, setLanguage, t, currentUser } = useApp();
   const [languageOpen, setLanguageOpen] = useState(false);
   const languagePickerRef = useRef(null);
   const currentLanguage = languages.find((item) => item.id === language) || languages[0];
@@ -74,7 +72,7 @@ export function Topbar({ onMenu }) {
           </button>)}
         </div>}
       </div>
-      <div className="profile"><span>LC</span><div><strong>Louis Chen</strong><small>{t("operator")}</small></div></div>
+      <div className="profile"><span>{currentUser.initials}</span><div><strong>{localize(currentUser.name, language)}</strong><small>{t("operator")}</small></div></div>
     </div>
   </header>;
 }

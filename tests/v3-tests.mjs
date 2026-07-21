@@ -1,11 +1,13 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
-  applyAttendance, applyManualAssignments, assignGroups, buildAttendanceCsv, canSendSurvey, drawPrizeAssignments, evaluateAttendance,
-  filterEvents, getAttendanceStatus, getEarlyBirdEligible, getEventEndAt, getRecord, getSurveyRecipients, isValidHttpUrl, normalizeEvent, toggleLeave,
-  parseRosterCsv, retainFailedRecipients, toggleFilteredRecipients, toggleRecipientSelection, validateManualAssignments,
+  applyAttendance, applyRosterGrouping, assignGroups, buildAttendanceCsv, buildRosterCsv, buildRosterTemplate, canSendSurvey,
+  drawPrizeAssignments, evaluateAttendance, filterEvents, getAttendanceStatus, getEarlyBirdEligible, getEventEndAt, getRecord,
+  getSurveyRecipients, isValidHttpUrl, normalizeEvent, parseRosterCsv, resizePrizeList, retainFailedRecipients, shiftIsoDate,
+  toIsoDate, toggleFilteredRecipients, toggleLeave, toggleRecipientSelection, validateRosterGrouping,
 } from "../src/v3/domain.js";
 import { applyDocumentLanguage, createTranslator } from "../src/v3/i18n.js";
+import { currentUser, events as seedEvents, rostersByEvent } from "../src/v3/data.js";
 
 const people = Array.from({ length: 10 }, (_, index) => ({
   id: `T${index + 1}`, name: { en: `Person ${index + 1}` }, department: { en: "People" },
@@ -24,10 +26,18 @@ records = applyAttendance(records, people[1].id, "checkin", "manual", "2026-07-1
 assert.deepEqual(getEarlyBirdEligible(people, records, 1).map((person) => person.id), ["T2"]);
 assert.equal(getAttendanceStatus(people[0], records.T1, event, new Date("2026-07-17T09:05:00+08:00")), "checkedIn");
 
-const prizes = [{ id: "p1", name: { en: "Gold" }, quantity: 1 }, { id: "p2", name: { en: "Silver" }, quantity: 1 }];
+const prizes = [{ id: "p1", name: { en: "Gold" }, quantity: 1 }, { id: "p2", name: { en: "Silver" }, quantity: 1 }, { id: "p3", name: { en: "Bronze" }, quantity: 1 }];
 const draw = drawPrizeAssignments(people, records, prizes, () => 0);
-assert.equal(draw.assignments.length, 2);
+assert.equal(draw.assignments.length, 2, "only checked-in people can win");
 assert.equal(new Set(draw.assignments.map((item) => item.person.id)).size, 2);
+assert.equal(draw.unassignedCount, 1);
+
+// Prize lists are modular: the manager decides how many prizes exist.
+assert.equal(resizePrizeList([{ name: "A", quantity: 2 }], 3).length, 3);
+assert.deepEqual(resizePrizeList([{ name: "A", quantity: 2 }], 3)[0], { name: "A", quantity: 2 });
+assert.equal(resizePrizeList([{ name: "A" }, { name: "B" }, { name: "C" }], 1).length, 1);
+assert.equal(resizePrizeList([], 0).length, 1);
+assert.equal(resizePrizeList([], 99).length, 12);
 
 const leaveRecords = toggleLeave({}, people[2].id, true, "2026-07-17T08:00:00+08:00");
 assert.equal(getAttendanceStatus(people[2], leaveRecords.T3, event), "leave");
@@ -37,34 +47,54 @@ assert.equal(csv.startsWith("\uFEFF"), true);
 assert.equal(csv.includes("Employee ID"), true);
 assert.equal(csv.includes("T1"), true);
 
+// Date helpers back the single-day filter that defaults to today.
+assert.equal(toIsoDate(new Date(2026, 6, 21)), "2026-07-21");
+assert.equal(shiftIsoDate("2026-07-21", 4), "2026-07-25");
+assert.equal(shiftIsoDate("2026-08-01", -1), "2026-07-31");
+
 const filterFixtures = [
-  { id: "E1", title: { en: "July Leadership" }, source: "lms", category: "leadership", status: "completed", date: "2026-07-12", startTime: "09:00", modules: { survey: true } },
-  { id: "E2", title: { en: "August AI" }, source: "self", category: "digital", status: "upcoming", date: "2026-08-03", startTime: "10:00", modules: { survey: false } },
+  { id: "E1", title: { en: "July Leadership" }, source: "lms", ownerId: "U-LOUIS", category: "leadership", status: "completed", date: "2026-07-12", startTime: "09:00", modules: { survey: true } },
+  { id: "E2", title: { en: "August AI" }, source: "self", ownerId: "U-LOUIS", category: "digital", status: "upcoming", date: "2026-08-03", startTime: "10:00", modules: { survey: false } },
+  { id: "E3", title: { en: "August Supplier Summit" }, source: "self", ownerId: "U-OTHER", category: "teamwork", status: "upcoming", date: "2026-08-03", startTime: "09:00", modules: { survey: true } },
+  { id: "E4", title: { en: "Cancelled Day" }, source: "self", ownerId: "U-LOUIS", category: "teamwork", status: "cancelled", date: "2026-08-03", startTime: "08:00", modules: {} },
 ];
 
 assert.deepEqual(filterEvents(filterFixtures, { query: "leadership" }).map(({ id }) => id), ["E1"]);
-assert.deepEqual(filterEvents(filterFixtures, { month: "2026-07" }).map(({ id }) => id), ["E1"]);
-assert.deepEqual(filterEvents(filterFixtures, { dateFrom: "2026-08-01", dateTo: "2026-08-31" }).map(({ id }) => id), ["E2"]);
-assert.deepEqual(filterEvents(filterFixtures, { module: "survey" }).map(({ id }) => id), ["E1"]);
-assert.deepEqual(filterEvents(filterFixtures, { includeHistory: true }).map(({ id }) => id), ["E1"]);
+assert.deepEqual(filterEvents(filterFixtures, { date: "2026-08-03" }).map(({ id }) => id), ["E3", "E2"]);
+assert.deepEqual(filterEvents(filterFixtures, { date: "2026-08-03", ownerId: "U-LOUIS" }).map(({ id }) => id), ["E2"]);
+assert.deepEqual(filterEvents(filterFixtures, { ownerId: "U-LOUIS" }).map(({ id }) => id), ["E1", "E2"], "cancelled events stay hidden");
+assert.deepEqual(filterEvents(filterFixtures, { module: "survey", ownerId: "U-LOUIS" }).map(({ id }) => id), ["E1"]);
 assert.deepEqual(filterEvents(filterFixtures, { source: "self", category: "digital", status: "upcoming" }).map(({ id }) => id), ["E2"]);
-assert.throws(() => filterEvents(filterFixtures, { dateFrom: "2026-08-31", dateTo: "2026-08-01" }), /INVALID_DATE_RANGE/);
 
-const normalized = normalizeEvent({ id: "SELF-1", source: "self", grouping: { enabled: true, targetSize: 4 }, survey: { url: "https://forms.example/x" } });
-assert.equal(normalized.grouping.mode, "automatic");
-assert.equal(normalized.grouping.targetSize, 4);
-assert.deepEqual(normalized.grouping.assignments, {});
-assert.equal(normalized.survey.timing, "after");
-assert.equal(normalized.rosterUrl, null);
+const normalized = normalizeEvent({ id: "SELF-1", source: "self", grouping: { enabled: true }, survey: { url: "https://forms.example/x" }, lottery: { prizes: [{ name: { en: "Gold" }, quantity: "3" }] } });
+assert.deepEqual(normalized.grouping, { enabled: true });
+assert.equal(normalized.survey.timing, undefined, "survey timing was removed");
+assert.equal(normalized.lottery.prizes[0].quantity, 3);
+assert.equal(normalized.lottery.prizes[0].id, "p1");
+assert.equal(normalizeEvent({ id: "SELF-2", grouping: {} }).grouping.enabled, false);
 
-const manualValidation = validateManualAssignments(people.slice(0, 2), { T1: "A", T2: " " });
-assert.deepEqual(manualValidation, { ok: false, unassignedIds: ["T2"] });
-const manualPeople = applyManualAssignments(people.slice(0, 2), { T1: " A ", T2: "B" });
-assert.deepEqual(manualPeople.map((person) => person.group), ["A", "B"]);
+// Rosters carry their own group column; the system never assigns groups for the manager.
 const parsedRoster = parseRosterCsv("employee_id,name,department,email\nE01,Ada,HR,ada@example.com");
 assert.deepEqual(parsedRoster.people.map((person) => person.id), ["E01"]);
 assert.equal(parsedRoster.people[0].email, "ada@example.com");
+assert.equal(parsedRoster.people[0].group, null);
 assert.throws(() => parseRosterCsv("employee_id,name\nE01,Ada\nE01,Grace"), /DUPLICATE_EMPLOYEE_ID/);
+assert.throws(() => parseRosterCsv("employee_id,name\nE01,Ada", { requireGroup: true }), /ROSTER_GROUP_COLUMN_REQUIRED/);
+assert.throws(() => parseRosterCsv("employee_id,name,group\nE01,Ada,", { requireGroup: true }), /ROSTER_GROUP_VALUE_REQUIRED/);
+const groupedRoster = parseRosterCsv("employee_id,name,group\nE01,Ada,A\nE02,Grace,B", { requireGroup: true });
+assert.deepEqual(groupedRoster.people.map((person) => person.group), ["A", "B"]);
+
+assert.deepEqual(validateRosterGrouping(groupedRoster.people, true), { ok: true, missingIds: [] });
+assert.deepEqual(validateRosterGrouping([{ id: "E01", group: "A" }, { id: "E02", group: " " }], true), { ok: false, missingIds: ["E02"] });
+assert.equal(validateRosterGrouping([{ id: "E02", group: null }], false).ok, true);
+assert.deepEqual(applyRosterGrouping(groupedRoster.people, false).map((person) => person.group), [null, null]);
+
+const template = buildRosterTemplate(true);
+assert.equal(template.startsWith("\uFEFFemployee_id,name,department,email,teams_url,extension,group"), true);
+assert.equal(buildRosterTemplate(false).includes(",group"), false);
+const rosterCsv = buildRosterCsv(groupedRoster.people, { language: "en", localize: (value) => value.en, withGroup: true });
+assert.equal(rosterCsv.includes("E01,Ada"), true);
+assert.equal(rosterCsv.trim().endsWith("B"), true);
 
 assert.equal(isValidHttpUrl("https://lms.example/events/E1/roster"), true);
 assert.equal(isValidHttpUrl("javascript:alert(1)"), false);
@@ -81,20 +111,31 @@ assert.deepEqual([...selectedRecipients], ["T3"]);
 const retainedRecipients = retainFailedRecipients(new Set(["T1", "T2"]), [{ personId: "T1", status: "sent" }, { personId: "T2", status: "failed" }]);
 assert.deepEqual([...retainedRecipients], ["T2"]);
 
-const afterEvent = { ...event, endTime: "17:00", survey: { timing: "after", url: "https://forms.example/x" } };
-assert.equal(getEventEndAt(afterEvent).toISOString(), "2026-07-17T09:00:00.000Z");
-const lockedSurvey = canSendSurvey(afterEvent, new Date("2026-07-17T16:59:59+08:00"));
+// Surveys are always sent after the event ends.
+const surveyEvent = { ...event, endTime: "17:00", survey: { url: "https://forms.example/x" } };
+assert.equal(getEventEndAt(surveyEvent).toISOString(), "2026-07-17T09:00:00.000Z");
+const lockedSurvey = canSendSurvey(surveyEvent, new Date("2026-07-17T16:59:59+08:00"));
 assert.equal(lockedSurvey.ok, false);
 assert.equal(lockedSurvey.code, "SURVEY_LOCKED");
-assert.equal(canSendSurvey(afterEvent, new Date("2026-07-17T17:00:00+08:00")).ok, true);
-assert.deepEqual(getSurveyRecipients(afterEvent, people.slice(0, 3), records).map((person) => person.id), ["T1", "T2"]);
+assert.equal(canSendSurvey(surveyEvent, new Date("2026-07-17T17:00:00+08:00")).ok, true);
+assert.deepEqual(getSurveyRecipients(surveyEvent, people.slice(0, 3), records).map((person) => person.id), ["T1", "T2"]);
+assert.equal(canSendSurvey({ ...surveyEvent, survey: { url: "" } }).code, "MISSING_SURVEY_LINK");
+assert.equal(canSendSurvey({ ...surveyEvent, status: "cancelled" }).code, "EVENT_UNAVAILABLE");
 
-const beforeEvent = { ...afterEvent, survey: { ...afterEvent.survey, timing: "before" } };
-assert.deepEqual(getSurveyRecipients(beforeEvent, people.slice(0, 3), {}).map((person) => person.id), ["T1", "T2", "T3"]);
-assert.equal(canSendSurvey({ ...beforeEvent, survey: { timing: "before", url: "" } }).code, "MISSING_SURVEY_LINK");
-assert.equal(canSendSurvey({ ...beforeEvent, status: "cancelled" }).code, "EVENT_UNAVAILABLE");
+// Seed data: every event the console shows must belong to the signed-in manager, and today must have events.
+const todayIsoDate = toIsoDate(new Date());
+const ownedEvents = seedEvents.filter((item) => item.ownerId === currentUser.id);
+assert.equal(ownedEvents.length < seedEvents.length, true, "seed data includes at least one event owned by someone else");
+assert.equal(filterEvents(seedEvents, { date: todayIsoDate, ownerId: currentUser.id }).length > 0, true, "today has visible events");
+assert.equal(seedEvents.every((item) => "materials" in item.modules === false), true, "the materials module was removed");
+// The creator is always the contact, so every event carries their extension instead of a separate organizer.
+assert.equal(seedEvents.every((item) => item.contactExtension && !item.organizer), true, "events expose a contact extension");
+assert.equal(ownedEvents.every((item) => item.contactExtension === currentUser.extension), true, "own events use the signed-in manager's extension");
+for (const item of seedEvents.filter((entry) => entry.grouping.enabled)) {
+  assert.equal(validateRosterGrouping(rostersByEvent[item.id], true).ok, true, `${item.id} roster is fully grouped`);
+}
 
-const translationKeys = ["courseCreator", "courseDescription", "groupMode_manual", "openLmsRoster", "sendSelected", "surveyTiming", "surveyLocked", "extension", "action"];
+const translationKeys = ["eventCreator", "eventDescription", "groupingToggle", "prizeCount", "prizeQty", "filterDate", "allDates", "modeCheckoutActive", "rosterPreview", "contactExtension", "sendAll", "extension", "action"];
 for (const language of ["zh-TW", "zh-CN", "en", "ja"]) {
   const translate = createTranslator(language);
   for (const key of translationKeys) {
@@ -103,6 +144,10 @@ for (const language of ["zh-TW", "zh-CN", "en", "ja"]) {
   }
 }
 assert.equal(createTranslator("zh-CN")("language"), "语言");
+assert.equal(createTranslator("zh-TW")("capacity"), "參加人數");
+assert.equal(createTranslator("zh-TW")("contactExtension"), "聯絡分機");
+assert.equal(createTranslator("zh-TW")("survey"), "問卷發送");
+assert.equal(createTranslator("zh-TW")("lottery"), "活動抽獎");
 
 const fakeDocument = { documentElement: { lang: "" } };
 applyDocumentLanguage(fakeDocument, "ja");

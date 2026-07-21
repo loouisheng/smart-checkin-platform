@@ -1,0 +1,10 @@
+.date-filter{min-width:206px;display:flex;flex-direction:column;gap:4px}
+.date-filter>span{display:flex;align-items:center;gap:4px;color:#667085;font-size:8px;font-weight:700}
+.date-filter-control{display:flex;align-items:center;gap:6px}
+.date-filter-control input{min-height:38px;flex:1;min-width:0;padding:0 9px;border:1px solid #d9e3f0;border-radius:9px;background:#fff;font-size:10px}
+.date-filter-control button{min-height:38px;padding:0 10px;border:1px solid #d9e3f0;border-radius:9px;color:#44546a;background:#f8fbff;font-size:9px;font-weight:700;white-space:nowrap;transition:.16s}
+.date-filter-control button:hover{border-color:#93b4ed;color:#1d4ed8;background:#eff6ff}
+.date-filter-control button.active{color:#1d4ed8;border-color:#93b4ed;background:#eff6ff}
+.date-filter.compact{min-width:0}
+.date-filter.compact>span{display:none}
+@media(max-width:680px){.date-filter{width:100%;min-width:0}}

@@ -1,6 +1,18 @@
-import { normalizeEvent } from "./domain.js";
+import { assignGroups, normalizeEvent, shiftIsoDate, todayIso } from "./domain.js";
 
 const l = (tw, cn, en, ja = tw) => ({ "zh-TW": tw, "zh-CN": cn, en, ja });
+
+export const currentUser = {
+  id: "U-LOUIS",
+  initials: "LC",
+  name: l("陳冠廷", "陈冠廷", "Louis Chen", "ルイス・チェン"),
+  extension: "2043",
+};
+
+const otherUser = { id: "U-MEIWEN", name: l("林美文", "林美文", "Mei-Wen Lin", "リン・メイウェン"), extension: "2777" };
+
+const today = todayIso();
+const day = (offset) => shiftIsoDate(today, offset);
 
 const peopleSeed = [
   ["T001", "陳怡君", "陈怡君", "Alice Chen", "人力資源", "人力资源", "People", "2181"],
@@ -26,119 +38,146 @@ export const roster = peopleSeed.map(([id, tw, cn, en, deptTw, deptCn, deptEn, e
   };
 });
 
-const modules = (values = {}) => ({ materials: false, survey: false, earlyBird: false, lottery: false, ...values });
+export function buildDemoRoster(count = 12, grouped = false) {
+  const people = roster.slice(0, count).map((person) => ({ ...person, group: null }));
+  return grouped ? assignGroups(people, 4) : people;
+}
+
+const modules = (values = {}) => ({ survey: false, earlyBird: false, lottery: false, ...values });
 
 const rawEvents = [
   {
-    id: "LMS-2026-0717", lmsId: "LRN-8842", source: "lms", lifecycle: "activated", status: "live",
+    id: "LMS-LRN-8842", lmsId: "LRN-8842", source: "lms", ownerId: currentUser.id, lifecycle: "activated", status: "live",
     title: l("跨部門領導力工作坊", "跨部门领导力工作坊", "Cross-functional Leadership Workshop", "部門横断リーダーシップ研修"),
-    organizer: l("學習發展部", "学习发展部", "Learning & Development", "人材開発部"),
-    date: "2026-07-17", startTime: "09:00", endTime: "17:00",
+    creator: currentUser.name, contactExtension: currentUser.extension,
+    date: day(0), startTime: "09:00", endTime: "17:00",
     location: l("台北總部 12F 學習中心", "台北总部 12F 学习中心", "Taipei HQ · 12F Learning Hub", "台北本社 12F ラーニングハブ"),
     category: "leadership", learningMode: "inPerson", audience: "manager", capacity: 48,
-    grouping: { enabled: true, targetSize: 4 }, modules: modules({ materials: true, survey: true, earlyBird: true, lottery: true }),
-    materials: { name: l("領導力工作坊手冊", "领导力工作坊手册", "Leadership workshop handbook", "リーダーシップ研修資料"), url: "https://learning.example/materials/leadership" },
-    survey: { url: "https://forms.example/leadership-2026", autoSend: true },
+    grouping: { enabled: true }, modules: modules({ survey: true, earlyBird: true, lottery: true }),
+    survey: { url: "https://forms.example/leadership-2026" },
     earlyBird: { quota: 3, reward: l("NT$200 電子禮券", "NT$200 电子礼券", "NT$200 e-voucher", "NT$200 電子ギフト券") },
     lottery: { prizes: [
       { id: "p1", name: l("學習金 3,000 元", "学习金 3,000 元", "NT$3,000 learning fund", "学習補助 NT$3,000"), quantity: 1 },
       { id: "p2", name: l("書券 500 元", "书券 500 元", "NT$500 book voucher", "図書券 NT$500"), quantity: 2 },
+      { id: "p3", name: l("咖啡兌換券", "咖啡兑换券", "Coffee voucher", "コーヒーチケット"), quantity: 3 },
     ] },
     rules: { lateAfterMin: 15, absentAfterMin: 30 },
   },
   {
-    id: "LMS-2026-0718", lmsId: "LRN-9017", source: "lms", lifecycle: "activated", status: "upcoming",
+    id: "LMS-LRN-9017", lmsId: "LRN-9017", source: "lms", ownerId: currentUser.id, lifecycle: "activated", status: "upcoming",
     title: l("生成式 AI 產品策略", "生成式 AI 产品策略", "Generative AI Product Strategy", "生成 AI プロダクト戦略"),
-    organizer: l("數位轉型辦公室", "数字化转型办公室", "Digital Transformation Office", "DX 推進室"),
-    date: "2026-07-18", startTime: "14:00", endTime: "16:00",
+    creator: currentUser.name, contactExtension: currentUser.extension,
+    date: day(0), startTime: "14:00", endTime: "16:00",
     location: l("台北總部 6F 演講廳", "台北总部 6F 演讲厅", "Taipei HQ · 6F Auditorium", "台北本社 6F 講堂"),
     category: "digital", learningMode: "hybrid", audience: "all", capacity: 120,
-    grouping: { enabled: false, targetSize: null }, modules: modules({ materials: true, survey: true }),
-    materials: { name: l("簡報與課程錄影", "简报与课程录像", "Slides and recording", "資料と録画"), url: "https://learning.example/materials/genai" },
-    survey: { url: "https://forms.example/genai-2026", autoSend: true }, earlyBird: null, lottery: null,
+    grouping: { enabled: false }, modules: modules({ survey: true }),
+    survey: { url: "https://forms.example/genai-2026" }, earlyBird: null, lottery: null,
     rules: { lateAfterMin: 20, absentAfterMin: 45 },
   },
   {
-    id: "SELF-2026-0725", source: "self", lifecycle: "activated", status: "upcoming",
+    id: "SELF-COACHING-LAB", source: "self", ownerId: currentUser.id, lifecycle: "activated", status: "upcoming",
     title: l("新任主管教練實驗室", "新任主管教练实验室", "New Manager Coaching Lab", "新任管理職コーチングラボ"),
-    organizer: l("人力資源部", "人力资源部", "People Team", "人事部"), date: "2026-07-25", startTime: "10:00", endTime: "15:00",
+    creator: currentUser.name, contactExtension: currentUser.extension,
+    date: day(4), startTime: "10:00", endTime: "15:00",
     location: l("新竹訓練中心 A201", "新竹培训中心 A201", "Hsinchu Training Center · A201", "新竹研修センター A201"),
     category: "leadership", learningMode: "inPerson", audience: "manager", capacity: 36,
-    grouping: { enabled: true, targetSize: 4 }, modules: modules({ survey: true, earlyBird: true }),
-    materials: null, survey: { url: "https://forms.example/new-manager", autoSend: true },
+    grouping: { enabled: true }, modules: modules({ survey: true, earlyBird: true }),
+    survey: { url: "https://forms.example/new-manager" },
     earlyBird: { quota: 5, reward: l("咖啡兌換券", "咖啡兑换券", "Coffee voucher", "コーヒーチケット") }, lottery: null,
     rules: { lateAfterMin: 10, absentAfterMin: 30 },
   },
   {
-    id: "LMS-2026-0710", lmsId: "LRN-8712", source: "lms", lifecycle: "activated", status: "completed",
+    id: "LMS-LRN-8712", lmsId: "LRN-8712", source: "lms", ownerId: currentUser.id, lifecycle: "activated", status: "completed",
     title: l("年度資訊安全訓練", "年度信息安全培训", "Annual Information Security", "年次情報セキュリティ研修"),
-    organizer: l("資訊安全部", "信息安全部", "Information Security", "情報セキュリティ部"),
-    date: "2026-07-10", startTime: "13:30", endTime: "15:30",
+    creator: currentUser.name, contactExtension: currentUser.extension,
+    date: day(-7), startTime: "13:30", endTime: "15:30",
     location: l("台北總部 8F", "台北总部 8F", "Taipei HQ · 8F", "台北本社 8F"),
     category: "compliance", learningMode: "inPerson", audience: "all", capacity: 80,
-    grouping: { enabled: false, targetSize: null }, modules: modules({ materials: true, survey: true }),
-    materials: { name: l("資安行動指南", "信息安全行动指南", "Security action guide", "セキュリティ行動ガイド"), url: "https://learning.example/materials/security" },
-    survey: { url: "https://forms.example/security", autoSend: true }, earlyBird: null, lottery: null, rules: { lateAfterMin: 10, absentAfterMin: 20 },
+    grouping: { enabled: false }, modules: modules({ survey: true }),
+    survey: { url: "https://forms.example/security" }, earlyBird: null, lottery: null,
+    rules: { lateAfterMin: 10, absentAfterMin: 20 },
   },
   {
-    id: "SELF-2026-0719", source: "self", lifecycle: "cancelled", status: "cancelled",
+    id: "SELF-OUTDOOR-DAY", source: "self", ownerId: currentUser.id, lifecycle: "cancelled", status: "cancelled",
     title: l("戶外團隊共識日", "户外团队共识日", "Outdoor Team Alignment Day", "チームビルディングデー"),
-    organizer: l("企業文化委員會", "企业文化委员会", "Culture Committee", "企業文化委員会"),
-    date: "2026-07-19", startTime: "09:00", endTime: "16:00",
+    creator: currentUser.name, contactExtension: currentUser.extension,
+    date: day(2), startTime: "09:00", endTime: "16:00",
     location: l("陽明山會議中心", "阳明山会议中心", "Yangmingshan Conference Center", "陽明山カンファレンスセンター"),
     category: "teamwork", learningMode: "inPerson", audience: "all", capacity: 60,
-    grouping: { enabled: true, targetSize: 6 }, modules: modules({ materials: true }),
-    materials: { name: l("行前指南", "行前指南", "Pre-event guide", "事前ガイド"), url: "https://learning.example/materials/outdoor" },
-    survey: null, earlyBird: null, lottery: null, rules: { lateAfterMin: 15, absentAfterMin: 30 },
-    cancelledAt: "2026-07-16T10:20:00+08:00",
+    grouping: { enabled: true }, modules: modules({ survey: true }),
+    survey: { url: "https://forms.example/outdoor" }, earlyBird: null, lottery: null,
+    rules: { lateAfterMin: 15, absentAfterMin: 30 },
+    cancelledAt: `${day(-1)}T10:20:00+08:00`,
     cancellationReason: l("因颱風影響延期", "因台风影响延期", "Postponed due to typhoon", "台風のため延期"),
   },
+  {
+    id: "SELF-SUPPLIER-SUMMIT", source: "self", ownerId: otherUser.id, lifecycle: "activated", status: "live",
+    title: l("供應商年度大會", "供应商年度大会", "Annual Supplier Summit", "サプライヤー年次大会"),
+    creator: otherUser.name, contactExtension: otherUser.extension,
+    date: day(0), startTime: "10:00", endTime: "16:00",
+    location: l("台中辦公室 3F", "台中办公室 3F", "Taichung Office · 3F", "台中オフィス 3F"),
+    category: "teamwork", learningMode: "inPerson", audience: "all", capacity: 90,
+    grouping: { enabled: false }, modules: modules({ survey: true }),
+    survey: { url: "https://forms.example/supplier" }, earlyBird: null, lottery: null,
+    rules: { lateAfterMin: 15, absentAfterMin: 30 },
+  },
 ];
+
 export const events = rawEvents.map((event) => normalizeEvent({
   ...event,
-  creator: event.creator || event.organizer,
-  description: event.description || (event.source === "lms" ? l("課程資訊由 LMS 同步提供。", "课程信息由 LMS 同步提供。", "Course information is synchronized from LMS.", "コース情報は LMS から同期されます。") : l("由活動管理者建立的內部學習活動。", "由活动管理员创建的内部学习活动。", "An internal learning event created by the event manager.", "イベント管理者が作成した社内学習イベントです。")),
-  rosterUrl: event.rosterUrl || (event.source === "lms" ? `https://lms.example/events/${event.lmsId}/roster` : null),
+  description: event.description || (event.source === "lms"
+    ? l("活動資訊由 LMS 同步提供。", "活动信息由 LMS 同步提供。", "Event information is synchronized from LMS.", "イベント情報は LMS から同期されます。")
+    : l("由活動管理者建立的內部活動。", "由活动管理员创建的内部活动。", "An internal event created by the event manager.", "イベント管理者が作成した社内イベントです。")),
 }));
 
-function assignRoster(event, count = 12) {
-  const people = roster.slice(0, count);
-  if (event.grouping.mode !== "automatic") return people.map((person) => ({ ...person, group: null }));
-  const groups = Math.ceil(people.length / event.grouping.targetSize);
-  return people.map((person, index) => ({ ...person, group: String.fromCharCode(65 + (index % groups)) }));
-}
+export const rostersByEvent = Object.fromEntries(events.map((event, index) => [event.id, buildDemoRoster(index === 1 ? 10 : 12, event.grouping.enabled)]));
 
-export const rostersByEvent = Object.fromEntries(events.map((event, index) => [event.id, assignRoster(event, index === 1 ? 10 : 12)]));
+const liveEvent = events[0];
+const completedEvent = events[3];
 
 export const initialAttendance = {
-  "LMS-2026-0717": {
-    T001: { checkin: { at: "2026-07-17T09:01:00+08:00", method: "card", operator: "Front Desk A" }, checkout: null, leave: false, audit: [] },
-    T002: { checkin: { at: "2026-07-17T09:04:00+08:00", method: "card", operator: "Front Desk A" }, checkout: null, leave: false, audit: [] },
-    T003: { checkin: { at: "2026-07-17T09:18:00+08:00", method: "manual", operator: "Louis Chen" }, checkout: null, leave: false, audit: [] },
+  [liveEvent.id]: {
+    T001: { checkin: { at: `${liveEvent.date}T09:01:00+08:00`, method: "card", operator: "Front Desk A" }, checkout: null, leave: false, audit: [] },
+    T002: { checkin: { at: `${liveEvent.date}T09:04:00+08:00`, method: "card", operator: "Front Desk A" }, checkout: null, leave: false, audit: [] },
+    T003: { checkin: { at: `${liveEvent.date}T09:18:00+08:00`, method: "manual", operator: "Louis Chen" }, checkout: null, leave: false, audit: [] },
+    T004: { checkin: { at: `${liveEvent.date}T09:06:00+08:00`, method: "card", operator: "Front Desk A" }, checkout: null, leave: false, audit: [] },
+    T005: { checkin: { at: `${liveEvent.date}T09:12:00+08:00`, method: "card", operator: "Front Desk A" }, checkout: null, leave: false, audit: [] },
     T009: { checkin: null, checkout: null, leave: true, leaveSource: "lms", audit: [] },
   },
-  "LMS-2026-0710": Object.fromEntries(roster.slice(0, 9).map((person, index) => [person.id, {
-    checkin: { at: `2026-07-10T13:${String(31 + index).padStart(2, "0")}:00+08:00`, method: index % 2 ? "manual" : "card" },
-    checkout: { at: "2026-07-10T15:30:00+08:00", method: "card" }, leave: false, audit: [],
+  [completedEvent.id]: Object.fromEntries(roster.slice(0, 9).map((person, index) => [person.id, {
+    checkin: { at: `${completedEvent.date}T13:${String(31 + index).padStart(2, "0")}:00+08:00`, method: index % 2 ? "manual" : "card" },
+    checkout: { at: `${completedEvent.date}T15:30:00+08:00`, method: "card" }, leave: false, audit: [],
   }])),
 };
 
 export const lmsCatalog = [
-  {
-    ...events[1], id: "LMS-CATALOG-2204", lmsId: "LRN-9204", lifecycle: "available", status: "upcoming", date: "2026-08-06",
+  normalizeEvent({
+    id: "LMS-CATALOG-9204", lmsId: "LRN-9204", source: "lms", lifecycle: "available", status: "upcoming",
     title: l("設計思考實務工作坊", "设计思考实务工作坊", "Design Thinking in Practice", "デザイン思考実践ワークショップ"),
-    category: "innovation", audience: "all", grouping: { mode: "automatic", enabled: true, targetSize: 5, assignments: {} },
-    rosterUrl: "https://lms.example/events/LRN-9204/roster",
-    modules: modules({ materials: true, survey: true, lottery: true }),
+    creator: l("學習發展部", "学习发展部", "Learning & Development", "人材開発部"),
+    description: l("以設計思考流程帶領跨部門團隊完成一次完整的問題解決演練。", "以设计思考流程带领跨部门团队完成一次完整的问题解决演练。", "Guide cross-functional teams through a full design thinking sprint.", "デザイン思考のプロセスで部門横断チームの課題解決演習を行います。"),
+    date: day(16), startTime: "09:30", endTime: "16:30",
+    location: l("台北總部 12F 學習中心", "台北总部 12F 学习中心", "Taipei HQ · 12F Learning Hub", "台北本社 12F ラーニングハブ"),
+    category: "innovation", learningMode: "inPerson", audience: "all", capacity: 40,
+    grouping: { enabled: true }, modules: modules({ survey: true, lottery: true }),
+    survey: { url: "https://forms.example/design-thinking" },
     lottery: { prizes: [{ id: "p1", name: l("創新實踐獎", "创新实践奖", "Innovation award", "イノベーション賞"), quantity: 3 }] },
-  },
-  {
-    ...events[1], id: "LMS-CATALOG-2231", lmsId: "LRN-9231", lifecycle: "available", status: "upcoming", date: "2026-08-14",
+    rules: { lateAfterMin: 15, absentAfterMin: 30 },
+    roster: buildDemoRoster(12, true),
+  }),
+  normalizeEvent({
+    id: "LMS-CATALOG-9231", lmsId: "LRN-9231", source: "lms", lifecycle: "available", status: "upcoming",
     title: l("企業 ESG 與永續經營", "企业 ESG 与可持续经营", "ESG & Sustainable Business", "ESG とサステナブル経営"),
-    category: "compliance", learningMode: "online", audience: "all",
-    grouping: { mode: "none", enabled: false, targetSize: null, assignments: {} }, modules: modules({ materials: true, survey: true }), lottery: null,
-    rosterUrl: "https://lms.example/events/LRN-9231/roster",
-  },
+    creator: l("永續發展辦公室", "可持续发展办公室", "Sustainability Office", "サステナビリティ推進室"),
+    description: l("說明企業 ESG 揭露要求與各部門的行動重點。", "说明企业 ESG 披露要求与各部门的行动重点。", "Company ESG disclosure requirements and department-level actions.", "ESG 開示要件と各部門のアクションを解説します。"),
+    date: day(24), startTime: "14:00", endTime: "16:00",
+    location: l("線上活動（Teams）", "线上活动（Teams）", "Online (Teams)", "オンライン（Teams）"),
+    category: "compliance", learningMode: "online", audience: "all", capacity: 200,
+    grouping: { enabled: false }, modules: modules({ survey: true }),
+    survey: { url: "https://forms.example/esg" }, lottery: null,
+    rules: { lateAfterMin: 15, absentAfterMin: 30 },
+    roster: buildDemoRoster(10, false),
+  }),
 ];
 
 export const categoryLabels = {

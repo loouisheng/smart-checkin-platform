@@ -1,22 +1,13 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { events as seedEvents, initialAttendance, lmsCatalog, roster, rostersByEvent as seedRosters } from "./data.js";
-import { applyAttendance, applyManualAssignments, assignGroups, canSendSurvey, drawPrizeAssignments, evaluateAttendance, getEarlyBirdEligible, getRecord, getSurveyRecipients, normalizeEvent, toggleLeave as updateLeave } from "./domain.js";
+import { currentUser, events as seedEvents, initialAttendance, lmsCatalog, rostersByEvent as seedRosters } from "./data.js";
+import { applyAttendance, applyRosterGrouping, canSendSurvey, drawPrizeAssignments, evaluateAttendance, getRecord, getSurveyRecipients, normalizeEvent, toggleLeave as updateLeave } from "./domain.js";
 import { applyDocumentLanguage, createTranslator, localize } from "./i18n.js";
 
 const AppContext = createContext(null);
 const clone = (value) => JSON.parse(JSON.stringify(value));
 
 function initialDeliveries() {
-  const result = {};
-  for (const event of seedEvents) {
-    const people = seedRosters[event.id] || [];
-    result[event.id] = {
-      materials: event.modules.materials ? Object.fromEntries(people.map((person) => [person.id, { status: "sent", sentAt: "2026-07-15T10:00:00+08:00", count: 1 }])) : {},
-      survey: {},
-      earlyBird: {},
-    };
-  }
-  return result;
+  return Object.fromEntries(seedEvents.map((event) => [event.id, { survey: {}, earlyBird: {} }]));
 }
 
 function delay(ms = 360) {
@@ -26,7 +17,7 @@ function delay(ms = 360) {
 export function AppProvider({ children }) {
   const [language, setLanguageState] = useState(() => localStorage.getItem("event-checkin-language") || "zh-TW");
   const [page, setPageState] = useState(() => new URLSearchParams(window.location.search).get("page") || "checkin");
-  const [events, setEvents] = useState(() => clone(seedEvents).map(normalizeEvent));
+  const [allEvents, setAllEvents] = useState(() => clone(seedEvents).map(normalizeEvent));
   const [rostersByEvent, setRostersByEvent] = useState(() => clone(seedRosters));
   const [attendanceByEvent, setAttendanceByEvent] = useState(() => clone(initialAttendance));
   const [deliveries, setDeliveries] = useState(initialDeliveries);
@@ -39,6 +30,9 @@ export function AppProvider({ children }) {
 
   const t = useMemo(() => createTranslator(language), [language]);
   useEffect(() => applyDocumentLanguage(document, language), [language]);
+
+  // Managers may only see and operate the events they created themselves.
+  const events = useMemo(() => allEvents.filter((event) => event.ownerId === currentUser.id), [allEvents]);
 
   const activeEvent = events.find((event) => event.id === activeEventId) || null;
   const activePeople = activeEvent ? rostersByEvent[activeEvent.id] || [] : [];
@@ -88,24 +82,23 @@ export function AppProvider({ children }) {
     setAttendanceByEvent((current) => ({ ...current, [eventId]: updateLeave(current[eventId] || {}, personId, value) }));
   }, []);
 
-  const saveSelfEvent = useCallback((form) => {
+  const saveEvent = useCallback((form) => {
     const lmsSource = form.source === "lms" ? lmsCatalog.find((item) => item.id === form.catalogId) : null;
-    const id = form.source === "lms"
-      ? `LMS-${form.lmsId}`
-      : `SELF-${form.date.replaceAll("-", "")}-${Date.now().toString().slice(-4)}`;
+    const id = form.source === "lms" ? `LMS-${form.lmsId}` : `SELF-${form.date.replaceAll("-", "")}-${Date.now().toString().slice(-4)}`;
     const makeLocalized = (value) => ({ "zh-TW": value, "zh-CN": value, en: value, ja: value });
-    const groupingMode = lmsSource ? (lmsSource.grouping?.mode || (lmsSource.grouping?.enabled ? "automatic" : "none")) : (form.groupingMode || (form.grouping ? "automatic" : "none"));
-    const event = {
+    const grouped = Boolean(form.grouping);
+    const event = normalizeEvent({
       id,
       lmsId: form.source === "lms" ? form.lmsId : undefined,
       source: form.source === "lms" ? "lms" : "self",
+      ownerId: currentUser.id,
       lifecycle: "activated",
       status: "upcoming",
       title: lmsSource ? clone(lmsSource.title) : makeLocalized(form.title),
-      organizer: lmsSource ? clone(lmsSource.organizer) : makeLocalized(form.organizer),
-      creator: lmsSource ? clone(lmsSource.creator) : makeLocalized(form.creator || form.organizer),
+      // The event creator is always the contact, so the extension comes from the signed-in manager.
+      creator: clone(currentUser.name),
+      contactExtension: currentUser.extension,
       description: lmsSource ? clone(lmsSource.description) : makeLocalized(form.description || ""),
-      rosterUrl: lmsSource?.rosterUrl || null,
       location: lmsSource ? clone(lmsSource.location) : makeLocalized(form.location),
       date: form.date,
       startTime: form.startTime,
@@ -114,47 +107,30 @@ export function AppProvider({ children }) {
       learningMode: form.learningMode,
       audience: lmsSource?.audience || "all",
       capacity: Number(form.capacity),
-      grouping: { mode: groupingMode, enabled: groupingMode !== "none", targetSize: groupingMode === "automatic" ? Number(lmsSource ? lmsSource.grouping?.targetSize : form.groupSize) : null, assignments: { ...(lmsSource?.grouping?.assignments || form.manualAssignments || {}) } },
+      grouping: { enabled: grouped },
       modules: { ...form.modules },
-      materials: form.modules.materials ? { name: makeLocalized(form.materialName), url: form.materialUrl } : null,
-      survey: form.modules.survey ? { url: form.surveyUrl, timing: form.surveyTiming || "after", autoSend: (form.surveyTiming || "after") === "after" } : null,
+      survey: form.modules.survey ? { url: form.surveyUrl } : null,
       earlyBird: form.modules.earlyBird ? { quota: Number(form.earlyQuota), reward: makeLocalized(form.earlyReward) } : null,
-      lottery: form.modules.lottery ? { prizes: form.prizes.filter((prize) => prize.name).map((prize, index) => ({ id: `p${index + 1}`, name: makeLocalized(prize.name), quantity: Number(prize.quantity) })) } : null,
+      lottery: form.modules.lottery
+        ? { prizes: form.prizes.filter((prize) => String(prize.name).trim()).map((prize, index) => ({ id: `p${index + 1}`, name: makeLocalized(prize.name), quantity: Number(prize.quantity) })) }
+        : null,
       rules: { lateAfterMin: 15, absentAfterMin: 30 },
-    };
-    const rosterCount = Math.max(1, Math.min(Number(form.rosterCount) || 12, roster.length));
-    const selectedRoster = form.source === "lms" ? roster.slice(0, rosterCount) : (form.rosterPeople || []).map((person) => ({ ...person }));
-    const people = event.grouping.mode === "automatic" ? assignGroups(selectedRoster, event.grouping.targetSize)
-      : event.grouping.mode === "manual" ? applyManualAssignments(selectedRoster, event.grouping.assignments) : selectedRoster.map((person) => ({ ...person, group: null }));
-    setEvents((current) => [...current.filter((item) => item.id !== id), event]);
+    });
+    const people = applyRosterGrouping(form.rosterPeople || [], grouped);
+    setAllEvents((current) => [...current.filter((item) => item.id !== id), event]);
     setRostersByEvent((current) => ({ ...current, [id]: people }));
     setAttendanceByEvent((current) => ({ ...current, [id]: {} }));
-    setDeliveries((current) => ({ ...current, [id]: { materials: event.modules.materials ? Object.fromEntries(people.map((person) => [person.id, { status: "sent", sentAt: new Date().toISOString(), count: 1 }])) : {}, survey: {}, earlyBird: {} } }));
+    setDeliveries((current) => ({ ...current, [id]: { survey: {}, earlyBird: {} } }));
     setActiveEventId(id);
     setNotice({ tone: "success", message: t("createEvent") });
     return event;
   }, [t]);
 
-  const importLms = useCallback(async (catalogId) => {
-    const source = lmsCatalog.find((event) => event.id === catalogId);
-    if (!source) throw new Error("INVALID_LMS_EVENT");
-    if (events.some((event) => event.lmsId === source.lmsId)) throw new Error("DUPLICATE_LMS_EVENT");
-    setBusy(true);
-    await delay();
-    const event = normalizeEvent({ ...clone(source), id: `LMS-${source.lmsId}`, lifecycle: "activated" });
-    const people = event.grouping.mode === "automatic" ? assignGroups(roster, event.grouping.targetSize) : roster.map((person) => ({ ...person, group: null }));
-    setEvents((current) => [...current, event]);
-    setRostersByEvent((current) => ({ ...current, [event.id]: people }));
-    setAttendanceByEvent((current) => ({ ...current, [event.id]: {} }));
-    setDeliveries((current) => ({ ...current, [event.id]: { materials: event.modules.materials ? Object.fromEntries(people.map((person) => [person.id, { status: "sent", sentAt: new Date().toISOString(), count: 1 }])) : {}, survey: {}, earlyBird: {} } }));
-    setActiveEventId(event.id);
-    setBusy(false);
-    return event;
-  }, [events]);
-
   const cancelEvent = useCallback((eventId, reason) => {
     if (!reason.trim()) return false;
-    setEvents((current) => current.map((event) => event.id === eventId ? { ...event, lifecycle: "cancelled", status: "cancelled", cancelledAt: new Date().toISOString(), cancellationReason: { "zh-TW": reason, "zh-CN": reason, en: reason, ja: reason } } : event));
+    setAllEvents((current) => current.map((event) => event.id === eventId
+      ? { ...event, lifecycle: "cancelled", status: "cancelled", cancelledAt: new Date().toISOString(), cancellationReason: { "zh-TW": reason, "zh-CN": reason, en: reason, ja: reason } }
+      : event));
     if (checkinEventId === eventId) setCheckinEventId(null);
     if (activeEventId === eventId) setActiveEventId(null);
     return true;
@@ -162,7 +138,7 @@ export function AppProvider({ children }) {
 
   const sendDelivery = useCallback(async ({ eventId, type, personIds }) => {
     const event = events.find((item) => item.id === eventId);
-    const link = type === "materials" ? event?.materials?.url : type === "survey" ? event?.survey?.url : "reward";
+    const link = type === "survey" ? event?.survey?.url : "reward";
     let deliveryPersonIds = [...personIds];
     if (type === "survey") {
       const eligibility = canSendSurvey(event);
@@ -178,7 +154,10 @@ export function AppProvider({ children }) {
     const now = new Date().toISOString();
     const people = rostersByEvent[eventId] || [];
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const results = deliveryPersonIds.map((personId) => ({ personId, status: emailPattern.test(people.find((person) => person.id === personId)?.email || "") ? "sent" : "failed", error: emailPattern.test(people.find((person) => person.id === personId)?.email || "") ? null : "INVALID_EMAIL" }));
+    const results = deliveryPersonIds.map((personId) => {
+      const valid = emailPattern.test(people.find((person) => person.id === personId)?.email || "");
+      return { personId, status: valid ? "sent" : "failed", error: valid ? null : "INVALID_EMAIL" };
+    });
     setDeliveries((current) => {
       const category = current[eventId]?.[type] || {};
       const nextCategory = { ...category };
@@ -202,8 +181,8 @@ export function AppProvider({ children }) {
   const value = {
     language, setLanguage, t, localize, page, navigate, events, rostersByEvent, attendanceByEvent, deliveries, lotteryResults,
     activeEventId, activeEvent, activePeople, activeRecords, selectActiveEvent, checkinEventId, openCheckin, closeCheckin,
-    recentActivity, recordAttendance, toggleLeave, saveSelfEvent, importLms, cancelEvent, sendDelivery, runLottery,
-    lmsCatalog, notice, setNotice, busy,
+    recentActivity, recordAttendance, toggleLeave, saveEvent, cancelEvent, sendDelivery, runLottery,
+    lmsCatalog, currentUser, notice, setNotice, busy,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
