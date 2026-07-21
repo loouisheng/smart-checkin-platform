@@ -378,18 +378,22 @@ Object.assign(ja, {
 
 /* contact = creator, module names aligned with the navigation, survey attendance summary */
 Object.assign(en, {
+  notIssued: "Not issued yet",
   contactExtension: "Contact extension", contactExtensionHint: "Filled in automatically from the event creator's extension.",
   survey: "Survey delivery", lottery: "Event lottery", surveyRecipients: "Survey recipients",
 });
 Object.assign(zhTW, {
+  notIssued: "尚未發放",
   contactExtension: "聯絡分機", contactExtensionHint: "自動帶入活動建立人的分機號碼。",
   survey: "問卷發送", lottery: "活動抽獎", surveyRecipients: "可發送人數",
 });
 Object.assign(zhCN, {
+  notIssued: "尚未发放",
   contactExtension: "联系分机", contactExtensionHint: "自动带入活动创建人的分机号码。",
   survey: "问卷发送", lottery: "活动抽奖", surveyRecipients: "可发送人数",
 });
 Object.assign(ja, {
+  notIssued: "未配布",
   contactExtension: "連絡内線", contactExtensionHint: "イベント作成者の内線番号を自動で入力します。",
   survey: "アンケート送信", lottery: "イベント抽選", surveyRecipients: "送信対象",
 });

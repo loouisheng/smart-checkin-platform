@@ -405,3 +405,5 @@ html,body,#root{max-width:100%;overflow-x:hidden}
 .mode-switch button svg{transition:transform .3s cubic-bezier(.34,1.5,.5,1)}
 .mode-switch button.active svg{transform:scale(1.18)}
 @media(prefers-reduced-motion:reduce){.stage-swap,.mode-banner.checkin,.mode-banner.checkout,.mode-banner>span{animation:none}}
+.issue-status{min-width:74px;padding:5px 9px;border-radius:8px;color:#667085;background:#f2f4f7;font-size:8px;font-weight:700;text-align:center;white-space:nowrap}
+.issue-status.done{color:#1d4ed8;background:#eff6ff}
