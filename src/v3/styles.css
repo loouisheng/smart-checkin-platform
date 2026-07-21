@@ -338,7 +338,7 @@ html,body,#root{max-width:100%;overflow-x:hidden}
 
 .mode-switch{position:relative;align-self:flex-start;padding:4px;border:1px solid #e3e8f0;border-radius:12px;display:flex;gap:0;background:#eef2f7}
 .mode-switch-thumb{position:absolute;top:4px;left:4px;width:calc(50% - 4px);height:calc(100% - 8px);border-radius:9px;background:#2563eb;box-shadow:0 6px 16px rgba(37,99,235,.26);transition:transform .32s cubic-bezier(.34,1.4,.5,1),background .25s ease,box-shadow .25s ease}
-.mode-switch.mode-checkout .mode-switch-thumb{transform:translateX(100%);background:#0d9488;box-shadow:0 6px 16px rgba(13,148,136,.26)}
+.mode-switch.mode-checkout .mode-switch-thumb{transform:translateX(100%);background:#1e40af;box-shadow:0 6px 16px rgba(30,64,175,.26)}
 .mode-switch button{position:relative;z-index:1;flex:1 0 50%;min-height:38px;padding:0 18px;border:0;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;gap:7px;color:#667085;background:transparent;font-size:10px;font-weight:700;white-space:nowrap;transition:color .22s ease}
 .mode-switch button.active,.mode-switch button.active:hover{color:#fff;background:transparent}
 .mode-switch button:not(.active):hover{color:#1d4ed8}
@@ -349,20 +349,20 @@ html,body,#root{max-width:100%;overflow-x:hidden}
 .mode-banner>span{width:31px;height:31px;flex:0 0 31px;border-radius:9px;display:grid;place-items:center;color:#fff;background:#2563eb}
 .mode-banner strong{color:#1d4ed8;font-size:11px;white-space:nowrap}
 .mode-banner small{color:#667085;font-size:9px}
-.mode-banner.checkout{border-color:#99f6e4;background:linear-gradient(120deg,#f0fdfa,#f8fffd)}
-.mode-banner.checkout>span{background:#0d9488}
-.mode-banner.checkout strong{color:#0f766e}
+.mode-banner.checkout{border-color:#bfdbfe;background:linear-gradient(120deg,#eaf1ff,#f5f9ff)}
+.mode-banner.checkout>span{background:#1e40af}
+.mode-banner.checkout strong{color:#1e3a8a}
 @keyframes mode-swap{from{opacity:0;transform:translateY(-7px) scale(.99)}}
 
-.checkin-stage.mode-checkout{border-color:#b5e8e0;background:radial-gradient(circle at 50% 45%,rgba(13,148,136,.10),transparent 30%),linear-gradient(160deg,#fff,#f4fffd)}
-.checkin-stage.mode-checkout .connection-orbit{color:#0d9488;background:#f0fdfa}
-.checkin-stage.mode-checkout .connection-orbit::before,.checkin-stage.mode-checkout .connection-orbit::after,.checkin-stage.mode-checkout .connection-orbit span{border-color:rgba(13,148,136,.28)}
-.checkin-stage.mode-checkout .connection-label{color:#0f766e}
-.checkin-stage.mode-checkout .connection-label i{background:#0d9488;box-shadow:0 0 0 4px rgba(13,148,136,.14)}
-.checkin-stage.mode-checkout .manual-icon{color:#0d9488;background:#f0fdfa}
-.checkin-stage.mode-checkout .demo-cards button:hover{color:#0f766e;border-color:#5eead4;background:#f4fffd}
+.checkin-stage.mode-checkout{border-color:#c7d9f7;background:radial-gradient(circle at 50% 45%,rgba(30,64,175,.10),transparent 30%),linear-gradient(160deg,#fff,#eef4ff)}
+.checkin-stage.mode-checkout .connection-orbit{color:#1e40af;background:#eaf1ff}
+.checkin-stage.mode-checkout .connection-orbit::before,.checkin-stage.mode-checkout .connection-orbit::after,.checkin-stage.mode-checkout .connection-orbit span{border-color:rgba(30,64,175,.28)}
+.checkin-stage.mode-checkout .connection-label{color:#1e3a8a}
+.checkin-stage.mode-checkout .connection-label i{background:#1e40af;box-shadow:0 0 0 4px rgba(30,64,175,.14)}
+.checkin-stage.mode-checkout .manual-icon{color:#1e40af;background:#eaf1ff}
+.checkin-stage.mode-checkout .demo-cards button:hover{color:#1e3a8a;border-color:#93b4ed;background:#eef4ff}
 .checkin-stage .demo-cards button:hover{border-color:#93b4ed;background:#f7faff}
-.recent-status.checkout{color:#0d9488;background:#f0fdfa}
+.recent-status.checkout{color:#1e40af;background:#eaf1ff}
 
 .lottery-stage{min-height:180px;padding:26px 30px;border:1px solid #1d4ed8;border-radius:18px;display:flex;align-items:center;gap:22px;color:#fff;background:linear-gradient(135deg,#1e40af 0%,#2563eb 58%,#3b82f6 100%);box-shadow:0 18px 40px rgba(30,64,175,.2)}
 .lottery-orbit{width:84px;height:84px;flex:0 0 84px;color:#fff;background:rgba(255,255,255,.15);box-shadow:none}
@@ -387,3 +387,21 @@ html,body,#root{max-width:100%;overflow-x:hidden}
   .mode-banner{align-items:flex-start;flex-direction:column;gap:7px}
 }
 @media(prefers-reduced-motion:reduce){.lottery-button{animation:none}.mode-switch-thumb{transition:none}}
+
+/* one blue palette for both modes — the switch reads through motion and depth — v7 */
+.checkin-stage{transition:background .32s ease,border-color .32s ease}
+.stage-swap{width:100%}
+.checkin-stage.mode-checkin .stage-swap{animation:swap-from-left .38s cubic-bezier(.22,1,.36,1) both}
+.checkin-stage.mode-checkout .stage-swap{animation:swap-from-right .38s cubic-bezier(.22,1,.36,1) both}
+@keyframes swap-from-left{from{opacity:0;transform:translateX(-26px)}}
+@keyframes swap-from-right{from{opacity:0;transform:translateX(26px)}}
+.mode-banner.checkin{animation:banner-from-left .34s cubic-bezier(.22,1,.36,1) both}
+.mode-banner.checkout{animation:banner-from-right .34s cubic-bezier(.22,1,.36,1) both}
+@keyframes banner-from-left{from{opacity:0;transform:translateX(-20px)}}
+@keyframes banner-from-right{from{opacity:0;transform:translateX(20px)}}
+.mode-banner>span{animation:mode-icon-pop .44s cubic-bezier(.34,1.5,.5,1) both}
+@keyframes mode-icon-pop{from{opacity:0;transform:scale(.45) rotate(-14deg)}}
+.checkin-stage.mode-checkout .connection-orbit::before,.checkin-stage.mode-checkout .connection-orbit::after,.checkin-stage.mode-checkout .connection-orbit span{border-style:dashed}
+.mode-switch button svg{transition:transform .3s cubic-bezier(.34,1.5,.5,1)}
+.mode-switch button.active svg{transform:scale(1.18)}
+@media(prefers-reduced-motion:reduce){.stage-swap,.mode-banner.checkin,.mode-banner.checkout,.mode-banner>span{animation:none}}

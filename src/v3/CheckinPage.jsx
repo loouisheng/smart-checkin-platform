@@ -138,7 +138,7 @@ function CheckinWorkspace() {
           <p>{localize(feedback.person.name, language)} · {feedback.person.id}{feedback.ok && event.grouping.enabled ? ` · ${t("group")} ${feedback.person.group}` : ""}</p>
         </div>
         <button className="secondary-button" type="button" onClick={() => setFeedback(null)}>{t("close")}</button>
-      </div> : method === "card" ? <div className="card-reader">
+      </div> : <div className="stage-swap" key={`${mode}-${method}`}>{method === "card" ? <div className="card-reader">
         <div className="connection-orbit"><span /><Contactless size={55} /></div>
         <span className="connection-label"><i />{t("readerReady")}</span>
         <h2>{t("waitingCard")}</h2>
@@ -150,7 +150,7 @@ function CheckinWorkspace() {
         {query && <div className="person-results">{matches.length ? matches.map((person) => <button type="button" key={person.id} onClick={() => process(person, "manual")}>
           <span>{localize(person.name, language).slice(0, 1)}</span><div><strong>{localize(person.name, language)}</strong><small>{person.id} · {localize(person.department, language)}</small></div><i>{getRecord(records, person.id).checkin ? t("checkedIn") : t("pending")}</i>
         </button>) : <EmptyState title={t("personNotFound")} />}</div>}
-      </div>}
+      </div>}</div>}
     </section>
     <RecentActivity eventId={event.id} />
   </div>;
