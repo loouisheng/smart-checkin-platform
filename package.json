@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:single": "vite build && node scripts/build-single-file.mjs",
     "preview": "vite preview",
     "test": "node tests/run-tests.mjs && node tests/v3-tests.mjs"
   },

@@ -14,8 +14,17 @@ function delay(ms = 360) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// A file:// copy of the app has an opaque origin: storage and history writes throw there.
+function readStoredLanguage() {
+  try {
+    return localStorage.getItem("event-checkin-language") || "zh-TW";
+  } catch {
+    return "zh-TW";
+  }
+}
+
 export function AppProvider({ children }) {
-  const [language, setLanguageState] = useState(() => localStorage.getItem("event-checkin-language") || "zh-TW");
+  const [language, setLanguageState] = useState(readStoredLanguage);
   const [page, setPageState] = useState(() => new URLSearchParams(window.location.search).get("page") || "checkin");
   const [allEvents, setAllEvents] = useState(() => clone(seedEvents).map(normalizeEvent));
   const [rostersByEvent, setRostersByEvent] = useState(() => clone(seedRosters));
@@ -40,15 +49,23 @@ export function AppProvider({ children }) {
 
   const setLanguage = useCallback((next) => {
     setLanguageState(next);
-    localStorage.setItem("event-checkin-language", next);
+    try {
+      localStorage.setItem("event-checkin-language", next);
+    } catch {
+      // Storage is unavailable in a standalone file:// copy; the choice just won't persist.
+    }
   }, []);
 
   const navigate = useCallback((nextPage) => {
     setNotice(null);
     setPageState(nextPage);
-    const url = new URL(window.location.href);
-    url.searchParams.set("page", nextPage);
-    window.history.replaceState({}, "", url);
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set("page", nextPage);
+      window.history.replaceState({}, "", url);
+    } catch {
+      // file:// documents cannot rewrite their URL; navigation still works in memory.
+    }
   }, []);
 
   const selectActiveEvent = useCallback((eventId, nextPage) => {
