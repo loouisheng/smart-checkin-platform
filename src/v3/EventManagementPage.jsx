@@ -1,13 +1,13 @@
 import { useMemo, useState } from "react";
 import {
-  CalendarPlus, Check, ClipboardList as ClipboardClock, Eye, Filter, Gift, GraduationCap, Info, LockKeyhole, Plus, Search,
-  Sparkles, Trash2,
+  ArrowLeft, CalendarPlus, Check, ClipboardList as ClipboardClock, Eye, Filter, Gift, GraduationCap, Info, LockKeyhole, Plus,
+  RefreshCw, Search, Sparkles, Trash2,
 } from "lucide-react";
 import { useApp } from "./context.jsx";
-import { filterEvents, resizePrizeList, todayIso, validateRosterGrouping } from "./domain.js";
+import { filterEvents, hoursBetween, resizePrizeList, todayIso, validateRosterGrouping } from "./domain.js";
 import { buildDemoRoster, categoryLabels, currentUser, modeLabels } from "./data.js";
-import { localize } from "./i18n.js";
-import { EmptyState, EventBadge, EventMeta, Modal, PageHeader, useEventOptions } from "./Shell.jsx";
+import { formatDate, localize } from "./i18n.js";
+import { EmptyState, EventBadge, EventMeta, LoadingButton, Modal, PageHeader, useEventOptions } from "./Shell.jsx";
 import { createEventFilters, EventDateFilter } from "./EventFilters.jsx";
 import { RosterPanel } from "./RosterPanel.jsx";
 import "./event-management-enhancements.css";
@@ -15,7 +15,8 @@ import "./event-management-enhancements.css";
 const moduleIcons = { survey: ClipboardClock, earlyBird: Gift, lottery: Sparkles };
 const defaultModules = { survey: false, earlyBird: false, lottery: false };
 const emptyForm = {
-  title: "", description: "", date: "", startTime: "09:00", endTime: "12:00", location: "", capacity: 40,
+  title: "", description: "", date: "", startTime: "09:00", endTime: "12:00", location: "",
+  instructor: "", deputy: "", totalHours: 3, hoursAuto: true,
   category: "leadership", learningMode: "inPerson", grouping: false, rosterPeople: [],
   modules: defaultModules, surveyUrl: "", earlyQuota: 5, earlyReward: "",
   prizes: [{ name: "", quantity: 1 }], source: "self", lmsId: null, catalogId: null,
@@ -30,7 +31,10 @@ function createLmsForm(event, language) {
     startTime: event.startTime,
     endTime: event.endTime,
     location: localize(event.location, language),
-    capacity: event.capacity,
+    instructor: localize(event.instructor, language),
+    deputy: localize(event.deputy, language),
+    totalHours: event.totalHours,
+    hoursAuto: false,
     category: event.category,
     learningMode: event.learningMode,
     grouping: Boolean(event.grouping?.enabled),
@@ -95,9 +99,15 @@ function EventForm({ onDone, initialEvent = null }) {
     setForm((current) => ({ ...current, grouping: next, rosterPeople: rosterMode === "upload" ? current.rosterPeople : providedRoster(next) }));
   };
 
+  const updateTime = (key, value) => setForm((current) => {
+    const next = { ...current, [key]: value };
+    if (current.hoursAuto !== false) next.totalHours = hoursBetween(next.startTime, next.endTime);
+    return next;
+  });
+
   const submit = (event) => {
     event.preventDefault();
-    if (!form.title.trim() || !form.location.trim() || !form.description.trim() || form.startTime >= form.endTime) {
+    if (!form.title.trim() || !form.location.trim() || !form.description.trim() || !form.instructor.trim() || !form.deputy.trim() || Number(form.totalHours) <= 0 || form.startTime >= form.endTime) {
       setError(t("requiredFields"));
       return;
     }
@@ -117,10 +127,13 @@ function EventForm({ onDone, initialEvent = null }) {
         <label><span>{t("eventCreator")}</span><input readOnly value={localize(currentUser.name, language)} /></label>
         <label><span>{t("contactExtension")}</span><input readOnly value={currentUser.extension} /><small className="field-hint">{t("contactExtensionHint")}</small></label>
         <label className="wide"><span>{t("eventDescription")} *</span><textarea rows="4" readOnly={source === "lms"} value={form.description} onChange={(event) => update("description", event.target.value)} /></label>
-        <label><span>{t("capacity")}</span><input readOnly={source === "lms"} type="number" min="1" value={form.capacity} onChange={(event) => update("capacity", event.target.value)} /></label>
+        <label><span>{t("instructor")} *</span><input readOnly={source === "lms"} value={form.instructor} onChange={(event) => update("instructor", event.target.value)} /></label>
+        <label><span>{t("deputy")} *</span><input readOnly={source === "lms"} value={form.deputy} onChange={(event) => update("deputy", event.target.value)} /></label>
+        <label><span>{t("totalHours")} *</span><input readOnly={source === "lms"} type="number" min="0.5" step="0.5" value={form.totalHours} onChange={(event) => setForm((current) => ({ ...current, totalHours: event.target.value, hoursAuto: false }))} /><small className="field-hint">{t("completionRule")}</small></label>
+        <label><span>{t("registeredCount")}</span><input readOnly value={form.rosterPeople.length} /><small className="field-hint">{t("registeredCountHint")}</small></label>
         <label><span>{t("date")}</span><input readOnly={source === "lms"} type="date" value={form.date} onChange={(event) => update("date", event.target.value)} /></label>
-        <label><span>{t("startTime")}</span><input readOnly={source === "lms"} type="time" value={form.startTime} onChange={(event) => update("startTime", event.target.value)} /></label>
-        <label><span>{t("endTime")}</span><input readOnly={source === "lms"} type="time" value={form.endTime} onChange={(event) => update("endTime", event.target.value)} /></label>
+        <label><span>{t("startTime")}</span><input readOnly={source === "lms"} type="time" value={form.startTime} onChange={(event) => updateTime("startTime", event.target.value)} /></label>
+        <label><span>{t("endTime")}</span><input readOnly={source === "lms"} type="time" value={form.endTime} onChange={(event) => updateTime("endTime", event.target.value)} /></label>
         <label className="wide"><span>{t("location")} *</span><input readOnly={source === "lms"} value={form.location} onChange={(event) => update("location", event.target.value)} /></label>
         <label><span>{t("category")}</span><select disabled={source === "lms"} value={form.category} onChange={(event) => update("category", event.target.value)}>{Object.keys(categoryLabels).map((value) => <option key={value} value={value}>{localize(categoryLabels[value], language)}</option>)}</select></label>
         <label><span>{t("learningMode")}</span><select disabled={source === "lms"} value={form.learningMode} onChange={(event) => update("learningMode", event.target.value)}>{Object.keys(modeLabels).map((value) => <option key={value} value={value}>{localize(modeLabels[value], language)}</option>)}</select></label>
@@ -196,20 +209,23 @@ function EventDetails({ event }) {
     <div><span>{t("sourceLabel")}</span><strong>{event.source === "lms" ? t("sourceLms") : t("sourceSelf")}</strong></div>
     <div><span>{t("eventCreator")}</span><strong>{localize(event.creator, language)}</strong></div>
     <div><span>{t("contactExtension")}</span><strong>{event.contactExtension || "—"}</strong></div>
-    <div><span>{t("capacity")}</span><strong>{event.capacity}</strong></div>
+    <div><span>{t("instructor")}</span><strong>{localize(event.instructor, language)}</strong></div>
+    <div><span>{t("deputy")}</span><strong>{localize(event.deputy, language)}</strong></div>
+    <div><span>{t("totalHours")}</span><strong>{event.totalHours} {t("hoursUnit")}</strong></div>
+    <div><span>{t("registeredCount")}</span><strong>{people.length} {t("peopleUnit")}</strong></div>
     <div className="wide"><span>{t("eventDescription")}</span><strong>{localize(event.description, language)}</strong></div>
     <div><span>{t("date")}</span><strong>{event.date} · {event.startTime}–{event.endTime}</strong></div>
     <div><span>{t("location")}</span><strong>{localize(event.location, language)}</strong></div>
     <div><span>{t("category")}</span><strong>{localize(categoryLabels[event.category], language)}</strong></div>
     <div><span>{t("learningMode")}</span><strong>{localize(modeLabels[event.learningMode], language)}</strong></div>
-    <div><span>{t("rosterTitle")}</span><strong>{people.length} {t("peopleUnit")}</strong></div>
     <div><span>{t("grouping")}</span><strong>{event.grouping?.enabled ? `${t("groupingOn")} · ${new Set(people.map((person) => person.group).filter(Boolean)).size} ${t("group")}` : t("groupingOff")}</strong></div>
     <div className="wide"><span>{t("modules")}</span><div className="detail-modules">{enabledModules.length ? enabledModules.map((key) => <span key={key}>{t(key)}</span>) : <strong>{t("noModules")}</strong>}</div></div>
   </div>;
 }
 
 function ManagedEvents() {
-  const { events, language, t, cancelEvent } = useApp();
+  const { events, language, t, cancelEvent, refreshLmsRoster, rostersByEvent, busy, setNotice } = useApp();
+  const [syncingId, setSyncingId] = useState(null);
   const [filters, setFilters] = useState(createEventFilters);
   const [cancelTarget, setCancelTarget] = useState(null);
   const [detailTarget, setDetailTarget] = useState(null);
@@ -225,6 +241,17 @@ function ManagedEvents() {
     }
   };
 
+  const syncRoster = async (eventId) => {
+    setSyncingId(eventId);
+    try {
+      const result = await refreshLmsRoster(eventId);
+      setNotice({ tone: "success", message: result.added ? `${result.added} ${t("rosterAdded")} · ${result.total} ${t("peopleUnit")}` : t("rosterSynced") });
+    } catch (error) {
+      setNotice({ tone: "error", message: error.message === "NETWORK_OFFLINE" ? t("networkOffline") : t("deliveryFailed") });
+    }
+    setSyncingId(null);
+  };
+
   return <>
     <div className="managed-filter">
       <label className="search-field wide"><Search size={17} /><input value={filters.query} onChange={(event) => update("query", event.target.value)} placeholder={t("searchEvent")} /></label>
@@ -238,8 +265,11 @@ function ManagedEvents() {
       <div className="event-source-icon">{event.source === "lms" ? <GraduationCap size={20} /> : <CalendarPlus size={20} />}</div>
       <div className="managed-copy"><div><EventBadge event={event} /><span>{event.source === "lms" ? t("sourceLms") : t("sourceSelf")}</span></div><h2>{localize(event.title, language)}</h2><EventMeta event={event} />
         <div className="managed-modules">{Object.entries(event.modules).filter(([, value]) => value).map(([key]) => <span key={key}>{t(key)}</span>)}{event.grouping?.enabled && <span>{t("groupingOn")}</span>}</div>
+        {event.rosterSyncedAt && <small className="roster-synced-at">{t("rosterSyncedAt")}：{formatDate(event.rosterSyncedAt, language)} · {(rostersByEvent[event.id] || []).length} {t("peopleUnit")}</small>}
       </div>
-      <div className="managed-actions"><button className="secondary-button" type="button" onClick={() => setDetailTarget(event)}><Eye size={14} />{t("viewEvent")}</button>
+      <div className="managed-actions">
+        {event.source === "lms" && <LoadingButton className="secondary-button" loading={syncingId === event.id} disabled={busy} onClick={() => syncRoster(event.id)}><RefreshCw size={14} />{t("refreshRoster")}</LoadingButton>}
+        <button className="secondary-button" type="button" onClick={() => setDetailTarget(event)}><Eye size={14} />{t("viewEvent")}</button>
         <button className="danger-button" type="button" onClick={() => setCancelTarget(event)}><Trash2 size={14} />{t("cancelEvent")}</button>
       </div>
     </article>) : <EmptyState title={t("empty")} />}</div>
@@ -256,15 +286,17 @@ function ManagedEvents() {
 
 export default function EventManagementPage() {
   const { t } = useApp();
-  const [tab, setTab] = useState("browse");
   const [creationMode, setCreationMode] = useState(null);
   const [lmsDraft, setLmsDraft] = useState(null);
-  const done = () => { setTab("browse"); setCreationMode(null); setLmsDraft(null); };
+  const creating = creationMode !== null;
+  const done = () => { setCreationMode(null); setLmsDraft(null); };
 
   return <div className="page-stack">
-    <PageHeader eyebrow="EVENT MANAGEMENT" title={t("eventsTitle")} description={t("eventsDesc")} />
-    <div className="segmented-tabs"><button type="button" className={tab === "create" ? "active" : ""} onClick={() => { setTab("create"); setCreationMode(null); setLmsDraft(null); }}><CalendarPlus size={16} />{t("newEvent")}</button><button type="button" className={tab === "browse" ? "active" : ""} onClick={() => setTab("browse")}><Search size={16} />{t("browseEvents")}</button></div>
-    {tab === "browse" ? <ManagedEvents />
+    <PageHeader eyebrow="EVENT MANAGEMENT" title={t("eventsTitle")} description={t("eventsDesc")}
+      actions={creating
+        ? <button className="secondary-button" type="button" onClick={done}><ArrowLeft size={15} />{t("backToEvents")}</button>
+        : <button className="primary-button" type="button" onClick={() => setCreationMode("choose")}><CalendarPlus size={16} />{t("newEventCta")}</button>} />
+    {!creating ? <ManagedEvents />
       : creationMode === "self" ? <EventForm onDone={done} />
       : creationMode === "lms" && !lmsDraft ? <LmsCatalog onSelect={(event) => setLmsDraft(event)} />
       : creationMode === "lms" && lmsDraft ? <EventForm onDone={done} initialEvent={lmsDraft} />

@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import {
-  ArrowLeft, CheckCircle2, Clock3, Nfc as Contactless, Filter, Keyboard, LogIn, LogOut, MapPin, Radio, Search, UserRound, XCircle,
+  ArrowLeft, BadgeCheck, CheckCircle2, Clock3, Nfc as Contactless, Filter, Keyboard, LogIn, LogOut, MapPin, Radio, Search,
+  TimerReset, UserRound, Users, XCircle,
 } from "lucide-react";
 import { useApp } from "./context.jsx";
 import { filterEvents, getRecord } from "./domain.js";
@@ -135,7 +136,15 @@ function CheckinWorkspace() {
       {feedback ? <div className="checkin-feedback">
         <span className={feedback.ok ? "success-icon" : "error-icon"}>{feedback.ok ? <CheckCircle2 size={34} /> : <XCircle size={34} />}</span>
         <div><small>{isCheckout ? t("checkout") : t("checkin")}</small><h2>{t(feedback.code)}</h2>
-          <p>{localize(feedback.person.name, language)} · {feedback.person.id}{feedback.ok && event.grouping.enabled ? ` · ${t("group")} ${feedback.person.group}` : ""}</p>
+          <p>{localize(feedback.person.name, language)} · {feedback.person.id}</p>
+          {feedback.ok && <div className="feedback-chips">
+            {event.grouping.enabled && <span className="feedback-chip group"><Users size={15} />{t("group")} <strong>{feedback.person.group || t("ungrouped")}</strong></span>}
+            {feedback.completion && <span className={feedback.completion.completed ? "feedback-chip completed" : "feedback-chip incomplete"}>
+              {feedback.completion.completed ? <BadgeCheck size={15} /> : <TimerReset size={15} />}
+              <strong>{feedback.completion.completed ? t("completed") : t("incomplete")}</strong>
+              {feedback.completion.attendedHours} / {feedback.completion.requiredHours} {t("hoursUnit")}
+            </span>}
+          </div>}
         </div>
         <button className="secondary-button" type="button" onClick={() => setFeedback(null)}>{t("close")}</button>
       </div> : <div className="stage-swap" key={`${mode}-${method}`}>{method === "card" ? <div className="card-reader">

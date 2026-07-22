@@ -392,6 +392,52 @@ Object.assign(zhCN, {
   contactExtension: "联系分机", contactExtensionHint: "自动带入活动创建人的分机号码。",
   survey: "问卷发送", lottery: "活动抽奖", surveyRecipients: "可发送人数",
 });
+/* instructor details, roster sync, completion tracking and range exports */
+Object.assign(en, {
+  instructor: "Instructor", totalHours: "Total hours", deputy: "Deputy contact", hoursUnit: "h",
+  registeredCount: "Registered participants", registeredCountHint: "Follows the roster, so it always matches the report KPIs.",
+  refreshRoster: "Sync roster from LMS", rosterSynced: "Roster is up to date", rosterAdded: "new registrations added", rosterSyncedAt: "Last synced",
+  completed: "Completed", incomplete: "Not completed", attendedHours: "Attended hours", requiredHours: "Required hours",
+  completionRule: "Completion needs at least 80% of the total hours.",
+  award: "Award", awardStatus: "Award", awarded: "Won", notAwarded: "Not won", markAward: "Mark as won", clearAward: "Clear award",
+  rangeExport: "Download range as Excel", rangeExportHint: "One Excel file per event, named after the event. Several events download as a single ZIP.",
+  rangeFrom: "From", rangeTo: "To", rangeExportEmpty: "No events in this date range", rangeExportDone: "Excel files generated",
+  exportCsv: "Download Excel", newEventCta: "New event", backToEvents: "Back to the event list",
+});
+Object.assign(zhTW, {
+  instructor: "講師", totalHours: "課程總時數", deputy: "代理人", hoursUnit: "小時",
+  registeredCount: "參加人數", registeredCountHint: "依名單人數自動計算，與數據報表的應到人數一致。",
+  refreshRoster: "從 LMS 更新名單", rosterSynced: "名單已是最新", rosterAdded: "位新報名者", rosterSyncedAt: "最後更新",
+  completed: "已完訓", incomplete: "未完訓", attendedHours: "實際時數", requiredHours: "應達時數",
+  completionRule: "完訓標準為實際參與時數達課程總時數的 80%。",
+  award: "中獎", awardStatus: "中獎狀態", awarded: "已中獎", notAwarded: "未中獎", markAward: "標記中獎", clearAward: "取消中獎",
+  rangeExport: "下載區間報表（Excel）", rangeExportHint: "區間內每場活動各產生一個 Excel 檔，並以活動名稱命名；多場活動會打包成一個 ZIP 下載。",
+  rangeFrom: "起始日期", rangeTo: "結束日期", rangeExportEmpty: "此日期區間沒有活動", rangeExportDone: "已產生 Excel 報表",
+  exportCsv: "下載 Excel", newEventCta: "新增活動", backToEvents: "返回活動列表",
+});
+Object.assign(zhCN, {
+  instructor: "讲师", totalHours: "课程总时数", deputy: "代理人", hoursUnit: "小时",
+  registeredCount: "参加人数", registeredCountHint: "按名单人数自动计算，与数据报表的应到人数一致。",
+  refreshRoster: "从 LMS 更新名单", rosterSynced: "名单已是最新", rosterAdded: "位新报名者", rosterSyncedAt: "最后更新",
+  completed: "已完训", incomplete: "未完训", attendedHours: "实际时数", requiredHours: "应达时数",
+  completionRule: "完训标准为实际参与时数达课程总时数的 80%。",
+  award: "中奖", awardStatus: "中奖状态", awarded: "已中奖", notAwarded: "未中奖", markAward: "标记中奖", clearAward: "取消中奖",
+  rangeExport: "下载区间报表（Excel）", rangeExportHint: "区间内每场活动各生成一个 Excel 文件，并以活动名称命名；多场活动会打包成一个 ZIP 下载。",
+  rangeFrom: "起始日期", rangeTo: "结束日期", rangeExportEmpty: "此日期区间没有活动", rangeExportDone: "已生成 Excel 报表",
+  exportCsv: "下载 Excel", newEventCta: "新增活动", backToEvents: "返回活动列表",
+});
+Object.assign(ja, {
+  instructor: "講師", totalHours: "総時間数", deputy: "代理担当者", hoursUnit: "時間",
+  registeredCount: "参加人数", registeredCountHint: "名簿の人数から自動計算し、レポートの予定人数と一致します。",
+  refreshRoster: "LMS から名簿を更新", rosterSynced: "名簿は最新です", rosterAdded: "名の新規申込", rosterSyncedAt: "最終更新",
+  completed: "修了", incomplete: "未修了", attendedHours: "受講時間", requiredHours: "必要時間",
+  completionRule: "総時間数の 80% 以上の受講で修了となります。",
+  award: "当選", awardStatus: "当選状況", awarded: "当選", notAwarded: "未当選", markAward: "当選にする", clearAward: "当選を解除",
+  rangeExport: "期間レポートを Excel で出力", rangeExportHint: "期間内のイベントごとにイベント名の Excel を作成し、複数件は ZIP でまとめてダウンロードします。",
+  rangeFrom: "開始日", rangeTo: "終了日", rangeExportEmpty: "この期間にイベントはありません", rangeExportDone: "Excel レポートを作成しました",
+  exportCsv: "Excel をダウンロード", newEventCta: "イベントを追加", backToEvents: "イベント一覧に戻る",
+});
+
 Object.assign(ja, {
   notIssued: "未配布",
   contactExtension: "連絡内線", contactExtensionHint: "イベント作成者の内線番号を自動で入力します。",

@@ -48,6 +48,9 @@ export function normalizeEvent(event) {
     ...event,
     creator: event.creator || localizedEmpty,
     contactExtension: event.contactExtension || "",
+    instructor: event.instructor || localizedEmpty,
+    deputy: event.deputy || localizedEmpty,
+    totalHours: Number(event.totalHours) || 0,
     description: event.description || localizedEmpty,
     rosterUrl: event.rosterUrl || null,
     grouping: { enabled: Boolean(grouping.enabled) },
@@ -79,17 +82,50 @@ export function getRecord(records, personId) {
   return records?.[personId] || { checkin: null, checkout: null, leave: false, audit: [] };
 }
 
-export function getAttendanceStatus(person, record, event, now = new Date()) {
+export const COMPLETION_RATIO = 0.8;
+export const attendanceStatuses = ["pending", "checkedIn", "late", "completed", "incomplete", "leave"];
+
+/** Hours between check-in and check-out; 0 while a person is still on site. */
+export function getAttendedHours(record) {
+  if (!record?.checkin?.at || !record?.checkout?.at) return 0;
+  const hours = (new Date(record.checkout.at).getTime() - new Date(record.checkin.at).getTime()) / 3600000;
+  return hours > 0 ? Math.round(hours * 100) / 100 : 0;
+}
+
+/** Duration between two HH:mm strings, rounded to one decimal. */
+export function hoursBetween(start, end) {
+  const parse = (value) => {
+    const [hour, minute] = String(value || "").split(":").map(Number);
+    return Number.isFinite(hour) && Number.isFinite(minute) ? hour * 60 + minute : null;
+  };
+  const from = parse(start);
+  const to = parse(end);
+  if (from == null || to == null || to <= from) return 0;
+  return Math.round(((to - from) / 60) * 10) / 10;
+}
+
+export function getRequiredHours(event) {
+  return Math.round((Number(event?.totalHours) || 0) * COMPLETION_RATIO * 100) / 100;
+}
+
+/** Training counts as completed once attendance reaches 80% of the event's total hours. */
+export function evaluateCompletion(event, record) {
+  const attendedHours = getAttendedHours(record);
+  const requiredHours = getRequiredHours(event);
+  const checkedOut = Boolean(record?.checkout);
+  return { attendedHours, requiredHours, completed: checkedOut && (requiredHours <= 0 || attendedHours >= requiredHours) };
+}
+
+export function getAttendanceStatus(person, record, event) {
   const inheritedLeave = person.leaveStatus && record.leaveSource !== "manual" && !record.checkin;
   if (record.leave || inheritedLeave) return "leave";
-  if (record.checkout) return "checkedOut";
+  if (record.checkout) return evaluateCompletion(event, record).completed ? "completed" : "incomplete";
   if (record.checkin) {
     const start = new Date(`${event.date}T${event.startTime}:00+08:00`);
     const lateAt = new Date(start.getTime() + (event.rules?.lateAfterMin || 0) * 60000);
     return new Date(record.checkin.at) > lateAt ? "late" : "checkedIn";
   }
-  const absentAt = new Date(`${event.date}T${event.startTime}:00+08:00`).getTime() + (event.rules?.absentAfterMin || 30) * 60000;
-  return now.getTime() > absentAt ? "absent" : "pending";
+  return "pending";
 }
 
 export function evaluateAttendance({ mode, person, event, record }) {
@@ -113,10 +149,15 @@ export function toggleLeave(records, personId, nextValue, at = new Date().toISOS
   return { ...records, [personId]: { ...current, leave: nextValue, leaveSource: "manual", audit: [...(current.audit || []), { type: nextValue ? "leave-set" : "leave-cleared", at, operator }] } };
 }
 
-export function calculateKpis(people, records, event, now = new Date()) {
-  const statuses = people.map((person) => getAttendanceStatus(person, getRecord(records, person.id), event, now));
-  const arrived = statuses.filter((status) => ["checkedIn", "checkedOut", "late"].includes(status)).length;
-  const needsAction = statuses.filter((status) => ["absent", "late"].includes(status)).length;
+export function toggleAward(records, personId, nextValue, at = new Date().toISOString(), operator = "Louis Chen") {
+  const current = getRecord(records, personId);
+  return { ...records, [personId]: { ...current, awarded: nextValue, audit: [...(current.audit || []), { type: nextValue ? "award-set" : "award-cleared", at, operator }] } };
+}
+
+export function calculateKpis(people, records, event) {
+  const statuses = people.map((person) => getAttendanceStatus(person, getRecord(records, person.id), event));
+  const arrived = statuses.filter((status) => ["checkedIn", "late", "completed", "incomplete"].includes(status)).length;
+  const needsAction = statuses.filter((status) => ["late", "incomplete"].includes(status)).length;
   return { expected: people.length, arrived, needsAction, attendanceRate: people.length ? Math.round((arrived / people.length) * 100) : 0 };
 }
 
@@ -135,14 +176,31 @@ export function drawPrizeAssignments(people, records, prizes, random = Math.rand
   return { assignments, eligibleCount: pool.length, unassignedCount: (prizes || []).reduce((sum, prize) => sum + Number(prize.quantity || 0), 0) - assignments.length };
 }
 
-export function buildAttendanceCsv({ event, people, records, language, localize, statusLabel }) {
-  const headers = ["Event ID", "Event", "Employee ID", "Name", "Department", "Group", "Attendance", "Check-in", "Check-out", "Email", "Teams URL", "Extension"];
+/** Shared table for both the CSV and the Excel exports. */
+export function buildAttendanceMatrix({ event, people, records, language, localize, statusLabel, label = (key) => key }) {
+  const headers = [
+    "Event ID", label("eventName"), label("date"), label("instructor"), label("employeeId"), label("name"), label("department"),
+    label("group"), label("attendance"), label("checkinAt"), label("checkoutAt"), label("attendedHours"), label("requiredHours"),
+    label("awardStatus"), "Email", label("extension"),
+  ];
   const rows = people.map((person) => {
     const record = getRecord(records, person.id);
-    const status = getAttendanceStatus(person, record, event);
-    return [event.id, localize(event.title, language), person.id, localize(person.name, language), localize(person.department, language), person.group || "", statusLabel(status), record.checkin?.at || "", record.checkout?.at || "", person.email, person.teamsUrl || "", person.extension || ""];
+    const completion = evaluateCompletion(event, record);
+    return [
+      event.id, localize(event.title, language), event.date, localize(event.instructor, language), person.id,
+      localize(person.name, language), localize(person.department, language), person.group || "",
+      statusLabel(getAttendanceStatus(person, record, event)),
+      record.checkin?.at || "", record.checkout?.at || "",
+      completion.attendedHours, completion.requiredHours,
+      record.awarded ? label("awarded") : label("notAwarded"),
+      person.email || "", person.extension || "",
+    ];
   });
-  return `\uFEFF${[headers, ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n")}`;
+  return [headers, ...rows];
+}
+
+export function buildAttendanceCsv(options) {
+  return `\uFEFF${buildAttendanceMatrix(options).map((row) => row.map(csvCell).join(",")).join("\r\n")}`;
 }
 
 export function downloadCsv(filename, content) {

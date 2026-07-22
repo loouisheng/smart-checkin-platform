@@ -43,6 +43,39 @@ export function buildDemoRoster(count = 12, grouped = false) {
   return grouped ? assignGroups(people, 4) : people;
 }
 
+// People who register after an event is created; the LMS roster refresh pulls them in.
+const lateRegistrantSeed = [
+  ["T013", "許雅琪", "许雅琪", "Penny Hsu", "客服中心", "客服中心", "Customer Care", "2374"],
+  ["T014", "劉建志", "刘建志", "Roger Liu", "製造部", "制造部", "Manufacturing", "2411"],
+  ["T015", "楊淑芳", "杨淑芳", "Sandy Yang", "品保部", "品保部", "Quality", "2265"],
+  ["T016", "簡宏毅", "简宏毅", "Tony Chien", "研發中心", "研发中心", "R&D", "2503"],
+  ["T017", "馮怡如", "冯怡如", "Vicky Feng", "公關部", "公关部", "Public Relations", "2158"],
+  ["T018", "宋柏翰", "宋柏翰", "Wayne Sung", "稽核室", "稽核室", "Audit", "2092"],
+];
+
+export const lateRegistrants = lateRegistrantSeed.map(([id, tw, cn, en, deptTw, deptCn, deptEn, extension]) => {
+  const email = `${id.toLowerCase()}@eventcheckin.example`;
+  return {
+    id, name: l(tw, cn, en), department: l(deptTw, deptCn, deptEn), email, extension,
+    teamsUrl: `https://teams.microsoft.com/l/chat/0/0?users=${encodeURIComponent(email)}`,
+    group: null, registered: true, leaveStatus: false,
+  };
+});
+
+/**
+ * Simulates asking LMS for the newest roster: returns the current people plus any
+ * colleagues who registered since the last sync, grouped the way LMS grouped them.
+ */
+export function fetchLmsRosterUpdate(currentPeople = [], grouped = false, batchSize = 2) {
+  const existing = new Set(currentPeople.map((person) => person.id));
+  const groups = [...new Set(currentPeople.map((person) => person.group).filter(Boolean))];
+  const additions = lateRegistrants.filter((person) => !existing.has(person.id)).slice(0, batchSize).map((person, index) => ({
+    ...person,
+    group: grouped ? groups[(currentPeople.length + index) % Math.max(1, groups.length)] || "A" : null,
+  }));
+  return { people: [...currentPeople.map((person) => ({ ...person })), ...additions], added: additions.length };
+}
+
 const modules = (values = {}) => ({ survey: false, earlyBird: false, lottery: false, ...values });
 
 const rawEvents = [
@@ -52,7 +85,7 @@ const rawEvents = [
     creator: currentUser.name, contactExtension: currentUser.extension,
     date: day(0), startTime: "09:00", endTime: "17:00",
     location: l("台北總部 12F 學習中心", "台北总部 12F 学习中心", "Taipei HQ · 12F Learning Hub", "台北本社 12F ラーニングハブ"),
-    category: "leadership", learningMode: "inPerson", audience: "manager", capacity: 48,
+    category: "leadership", learningMode: "inPerson", audience: "manager", capacity: 12, totalHours: 8, instructor: l("林志豪", "林志豪", "Howard Lin", "ホワード・リン"), deputy: l("王淑芬", "王淑芬", "Sophia Wang", "ソフィア・ワン"),
     grouping: { enabled: true }, modules: modules({ survey: true, earlyBird: true, lottery: true }),
     survey: { url: "https://forms.example/leadership-2026" },
     earlyBird: { quota: 3, reward: l("NT$200 電子禮券", "NT$200 电子礼券", "NT$200 e-voucher", "NT$200 電子ギフト券") },
@@ -69,7 +102,7 @@ const rawEvents = [
     creator: currentUser.name, contactExtension: currentUser.extension,
     date: day(0), startTime: "14:00", endTime: "16:00",
     location: l("台北總部 6F 演講廳", "台北总部 6F 演讲厅", "Taipei HQ · 6F Auditorium", "台北本社 6F 講堂"),
-    category: "digital", learningMode: "hybrid", audience: "all", capacity: 120,
+    category: "digital", learningMode: "hybrid", audience: "all", capacity: 10, totalHours: 2, instructor: l("陳品瑄", "陈品瑄", "Sabrina Chen", "サブリナ・チェン"), deputy: l("周立群", "周立群", "Leo Chou", "レオ・チョウ"),
     grouping: { enabled: false }, modules: modules({ survey: true }),
     survey: { url: "https://forms.example/genai-2026" }, earlyBird: null, lottery: null,
     rules: { lateAfterMin: 20, absentAfterMin: 45 },
@@ -80,7 +113,7 @@ const rawEvents = [
     creator: currentUser.name, contactExtension: currentUser.extension,
     date: day(4), startTime: "10:00", endTime: "15:00",
     location: l("新竹訓練中心 A201", "新竹培训中心 A201", "Hsinchu Training Center · A201", "新竹研修センター A201"),
-    category: "leadership", learningMode: "inPerson", audience: "manager", capacity: 36,
+    category: "leadership", learningMode: "inPerson", audience: "manager", capacity: 12, totalHours: 5, instructor: l("黃振宇", "黄振宇", "Marcus Huang", "マーカス・ホァン"), deputy: l("李佳蓉", "李佳蓉", "Karen Lee", "カレン・リー"),
     grouping: { enabled: true }, modules: modules({ survey: true, earlyBird: true }),
     survey: { url: "https://forms.example/new-manager" },
     earlyBird: { quota: 5, reward: l("咖啡兌換券", "咖啡兑换券", "Coffee voucher", "コーヒーチケット") }, lottery: null,
@@ -92,7 +125,7 @@ const rawEvents = [
     creator: currentUser.name, contactExtension: currentUser.extension,
     date: day(-7), startTime: "13:30", endTime: "15:30",
     location: l("台北總部 8F", "台北总部 8F", "Taipei HQ · 8F", "台北本社 8F"),
-    category: "compliance", learningMode: "inPerson", audience: "all", capacity: 80,
+    category: "compliance", learningMode: "inPerson", audience: "all", capacity: 12, totalHours: 2, instructor: l("張哲瑋", "张哲玮", "Victor Chang", "ビクター・チャン"), deputy: l("蔡孟儒", "蔡孟儒", "Miles Tsai", "マイルズ・ツァイ"),
     grouping: { enabled: false }, modules: modules({ survey: true }),
     survey: { url: "https://forms.example/security" }, earlyBird: null, lottery: null,
     rules: { lateAfterMin: 10, absentAfterMin: 20 },
@@ -103,7 +136,7 @@ const rawEvents = [
     creator: currentUser.name, contactExtension: currentUser.extension,
     date: day(2), startTime: "09:00", endTime: "16:00",
     location: l("陽明山會議中心", "阳明山会议中心", "Yangmingshan Conference Center", "陽明山カンファレンスセンター"),
-    category: "teamwork", learningMode: "inPerson", audience: "all", capacity: 60,
+    category: "teamwork", learningMode: "inPerson", audience: "all", capacity: 12, totalHours: 7, instructor: l("趙芷若", "赵芷若", "Joyce Chao", "ジョイス・チャオ"), deputy: l("黃郁文", "黄郁文", "Wendy Huang", "ウェンディ・ホァン"),
     grouping: { enabled: true }, modules: modules({ survey: true }),
     survey: { url: "https://forms.example/outdoor" }, earlyBird: null, lottery: null,
     rules: { lateAfterMin: 15, absentAfterMin: 30 },
@@ -116,7 +149,7 @@ const rawEvents = [
     creator: otherUser.name, contactExtension: otherUser.extension,
     date: day(0), startTime: "10:00", endTime: "16:00",
     location: l("台中辦公室 3F", "台中办公室 3F", "Taichung Office · 3F", "台中オフィス 3F"),
-    category: "teamwork", learningMode: "inPerson", audience: "all", capacity: 90,
+    category: "teamwork", learningMode: "inPerson", audience: "all", capacity: 12, totalHours: 6, instructor: l("林美文", "林美文", "Mei-Wen Lin", "リン・メイウェン"), deputy: l("吳承恩", "吴承恩", "Ethan Wu", "イーサン・ウー"),
     grouping: { enabled: false }, modules: modules({ survey: true }),
     survey: { url: "https://forms.example/supplier" }, earlyBird: null, lottery: null,
     rules: { lateAfterMin: 15, absentAfterMin: 30 },
@@ -130,7 +163,7 @@ export const events = rawEvents.map((event) => normalizeEvent({
     : l("由活動管理者建立的內部活動。", "由活动管理员创建的内部活动。", "An internal event created by the event manager.", "イベント管理者が作成した社内イベントです。")),
 }));
 
-export const rostersByEvent = Object.fromEntries(events.map((event, index) => [event.id, buildDemoRoster(index === 1 ? 10 : 12, event.grouping.enabled)]));
+export const rostersByEvent = Object.fromEntries(events.map((event) => [event.id, buildDemoRoster(event.capacity, event.grouping.enabled)]));
 
 const liveEvent = events[0];
 const completedEvent = events[3];
@@ -144,9 +177,11 @@ export const initialAttendance = {
     T005: { checkin: { at: `${liveEvent.date}T09:12:00+08:00`, method: "card", operator: "Front Desk A" }, checkout: null, leave: false, audit: [] },
     T009: { checkin: null, checkout: null, leave: true, leaveSource: "lms", audit: [] },
   },
+  // The last two left early, so they fall under the 80% completion threshold.
   [completedEvent.id]: Object.fromEntries(roster.slice(0, 9).map((person, index) => [person.id, {
     checkin: { at: `${completedEvent.date}T13:${String(31 + index).padStart(2, "0")}:00+08:00`, method: index % 2 ? "manual" : "card" },
-    checkout: { at: `${completedEvent.date}T15:30:00+08:00`, method: "card" }, leave: false, audit: [],
+    checkout: { at: `${completedEvent.date}T${index >= 7 ? "14:20" : "15:30"}:00+08:00`, method: "card" },
+    leave: false, awarded: index === 0, audit: [],
   }])),
 };
 
@@ -158,7 +193,7 @@ export const lmsCatalog = [
     description: l("以設計思考流程帶領跨部門團隊完成一次完整的問題解決演練。", "以设计思考流程带领跨部门团队完成一次完整的问题解决演练。", "Guide cross-functional teams through a full design thinking sprint.", "デザイン思考のプロセスで部門横断チームの課題解決演習を行います。"),
     date: day(16), startTime: "09:30", endTime: "16:30",
     location: l("台北總部 12F 學習中心", "台北总部 12F 学习中心", "Taipei HQ · 12F Learning Hub", "台北本社 12F ラーニングハブ"),
-    category: "innovation", learningMode: "inPerson", audience: "all", capacity: 40,
+    category: "innovation", learningMode: "inPerson", audience: "all", capacity: 12, totalHours: 7, instructor: l("鄭又寧", "郑又宁", "Yuning Cheng", "ユニン・チェン"), deputy: l("吳建宏", "吴建宏", "Ken Wu", "ケン・ウー"),
     grouping: { enabled: true }, modules: modules({ survey: true, lottery: true }),
     survey: { url: "https://forms.example/design-thinking" },
     lottery: { prizes: [{ id: "p1", name: l("創新實踐獎", "创新实践奖", "Innovation award", "イノベーション賞"), quantity: 3 }] },
@@ -172,7 +207,7 @@ export const lmsCatalog = [
     description: l("說明企業 ESG 揭露要求與各部門的行動重點。", "说明企业 ESG 披露要求与各部门的行动重点。", "Company ESG disclosure requirements and department-level actions.", "ESG 開示要件と各部門のアクションを解説します。"),
     date: day(24), startTime: "14:00", endTime: "16:00",
     location: l("線上活動（Teams）", "线上活动（Teams）", "Online (Teams)", "オンライン（Teams）"),
-    category: "compliance", learningMode: "online", audience: "all", capacity: 200,
+    category: "compliance", learningMode: "online", audience: "all", capacity: 10, totalHours: 2, instructor: l("謝明德", "谢明德", "Ming-Te Hsieh", "ミンテ・シェ"), deputy: l("蘇怡如", "苏怡如", "Ruby Su", "ルビー・スー"),
     grouping: { enabled: false }, modules: modules({ survey: true }),
     survey: { url: "https://forms.example/esg" }, lottery: null,
     rules: { lateAfterMin: 15, absentAfterMin: 30 },

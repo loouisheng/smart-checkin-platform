@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { currentUser, events as seedEvents, initialAttendance, lmsCatalog, rostersByEvent as seedRosters } from "./data.js";
-import { applyAttendance, applyRosterGrouping, canSendSurvey, drawPrizeAssignments, evaluateAttendance, getRecord, getSurveyRecipients, normalizeEvent, toggleLeave as updateLeave } from "./domain.js";
+import { currentUser, events as seedEvents, fetchLmsRosterUpdate, initialAttendance, lmsCatalog, rostersByEvent as seedRosters } from "./data.js";
+import { applyAttendance, applyRosterGrouping, canSendSurvey, drawPrizeAssignments, evaluateAttendance, evaluateCompletion, getRecord, getSurveyRecipients, normalizeEvent, toggleAward as updateAward, toggleLeave as updateLeave } from "./domain.js";
 import { applyDocumentLanguage, createTranslator, localize } from "./i18n.js";
 
 const AppContext = createContext(null);
@@ -75,12 +75,36 @@ export function AppProvider({ children }) {
     setAttendanceByEvent((current) => ({ ...current, [eventId]: applyAttendance(current[eventId] || {}, personId, mode, method, at) }));
     const activity = { id: `${personId}-${at}`, personId, person, mode, method, at, ok: true, code: evaluation.code };
     setRecentActivity((current) => ({ ...current, [eventId]: [activity, ...(current[eventId] || [])].slice(0, 8) }));
-    return { ...evaluation, activity };
+    // Check-out reports completion immediately, so the front desk can tell the person on the spot.
+    const completion = mode === "checkout" ? evaluateCompletion(event, { ...getRecord(records, personId), checkout: { at, method } }) : null;
+    return { ...evaluation, activity, completion };
   }, [attendanceByEvent, events, rostersByEvent]);
 
   const toggleLeave = useCallback((eventId, personId, value) => {
     setAttendanceByEvent((current) => ({ ...current, [eventId]: updateLeave(current[eventId] || {}, personId, value) }));
   }, []);
+
+  const toggleAward = useCallback((eventId, personId, value) => {
+    setAttendanceByEvent((current) => ({ ...current, [eventId]: updateAward(current[eventId] || {}, personId, value) }));
+  }, []);
+
+  /** Pulls the newest LMS registrations into an already managed event. */
+  const refreshLmsRoster = useCallback(async (eventId) => {
+    const event = events.find((item) => item.id === eventId);
+    if (!event || event.source !== "lms") throw new Error("NOT_LMS_EVENT");
+    if (!navigator.onLine) throw new Error("NETWORK_OFFLINE");
+    setBusy(true);
+    await delay();
+    const update = fetchLmsRosterUpdate(rostersByEvent[eventId] || [], event.grouping.enabled);
+    if (update.added) {
+      setRostersByEvent((current) => ({ ...current, [eventId]: update.people }));
+      setAllEvents((current) => current.map((item) => item.id === eventId ? { ...item, capacity: update.people.length, rosterSyncedAt: new Date().toISOString() } : item));
+    } else {
+      setAllEvents((current) => current.map((item) => item.id === eventId ? { ...item, rosterSyncedAt: new Date().toISOString() } : item));
+    }
+    setBusy(false);
+    return { added: update.added, total: update.people.length };
+  }, [events, rostersByEvent]);
 
   const saveEvent = useCallback((form) => {
     const lmsSource = form.source === "lms" ? lmsCatalog.find((item) => item.id === form.catalogId) : null;
@@ -106,7 +130,11 @@ export function AppProvider({ children }) {
       category: form.category,
       learningMode: form.learningMode,
       audience: lmsSource?.audience || "all",
-      capacity: Number(form.capacity),
+      instructor: lmsSource ? clone(lmsSource.instructor) : makeLocalized(form.instructor),
+      deputy: lmsSource ? clone(lmsSource.deputy) : makeLocalized(form.deputy),
+      totalHours: Number(lmsSource ? lmsSource.totalHours : form.totalHours) || 0,
+      // Registered headcount always mirrors the roster so it matches the report KPIs.
+      capacity: (form.rosterPeople || []).length,
       grouping: { enabled: grouped },
       modules: { ...form.modules },
       survey: form.modules.survey ? { url: form.surveyUrl } : null,
@@ -181,7 +209,7 @@ export function AppProvider({ children }) {
   const value = {
     language, setLanguage, t, localize, page, navigate, events, rostersByEvent, attendanceByEvent, deliveries, lotteryResults,
     activeEventId, activeEvent, activePeople, activeRecords, selectActiveEvent, checkinEventId, openCheckin, closeCheckin,
-    recentActivity, recordAttendance, toggleLeave, saveEvent, cancelEvent, sendDelivery, runLottery,
+    recentActivity, recordAttendance, toggleLeave, toggleAward, refreshLmsRoster, saveEvent, cancelEvent, sendDelivery, runLottery,
     lmsCatalog, currentUser, notice, setNotice, busy,
   };
 
