@@ -14,7 +14,7 @@ const errorKeys = {
   ROSTER_GROUP_VALUE_REQUIRED: "rosterGroupValueRequired",
 };
 
-export function RosterPanel({ source, people, setPeople, grouping, mode, setMode, fileName, setFileName, setError, onUseProvided }) {
+export function RosterPanel({ source, people, setPeople, grouping, mode, setMode, fileName, setFileName, setError, onUseProvided, providedLabel, providedCount = 0 }) {
   const { language, t } = useApp();
   const inputRef = useRef(null);
   const isLms = source === "lms";
@@ -51,7 +51,7 @@ export function RosterPanel({ source, people, setPeople, grouping, mode, setMode
     <div className="roster-options">
       <button className={mode !== "upload" ? "roster-option active" : "roster-option"} type="button" onClick={useProvidedRoster}>
         <span>{isLms ? <GraduationCap size={16} /> : <Users size={16} />}</span>
-        <div><strong>{isLms ? t("lmsRosterLoaded") : t("demoRosterFull")}</strong><small>12 {t("peopleUnit")}</small></div>
+        <div><strong>{providedLabel || (isLms ? t("lmsRosterLoaded") : t("demoRosterFull"))}</strong><small>{providedCount} {t("peopleUnit")}</small></div>
       </button>
       <button className={mode === "upload" ? "roster-option active" : "roster-option"} type="button" onClick={() => inputRef.current?.click()}>
         <span><FileSpreadsheet size={16} /></span>
@@ -61,7 +61,7 @@ export function RosterPanel({ source, people, setPeople, grouping, mode, setMode
     <input ref={inputRef} className="file-input-hidden" type="file" accept=".csv,text/csv" onChange={(event) => { readFile(event.target.files?.[0]); event.target.value = ""; }} />
 
     <div className="roster-summary">
-      <Check size={14} /><span>{fileName || (isLms ? t("lmsRosterLoaded") : t("demoRosterFull"))}</span>
+      <Check size={14} /><span>{fileName || providedLabel || (isLms ? t("lmsRosterLoaded") : t("demoRosterFull"))}</span>
       <strong>{people.length} {t("peopleUnit")}</strong>
       {grouping && <em>{new Set(people.map((person) => person.group).filter(Boolean)).size} {t("group")}</em>}
     </div>

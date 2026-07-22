@@ -416,9 +416,10 @@ html,body,#root{max-width:100%;overflow-x:hidden}
 .hours-cell small{color:#667085;font-weight:400}
 .award-toggle{padding:5px 9px;border:1px solid #d9e0ea;border-radius:8px;display:inline-flex;align-items:center;gap:5px;color:#667085;background:#fff;font-size:8px;font-weight:700;white-space:nowrap;transition:.16s}
 .award-toggle:hover:not(.static){border-color:#93b4ed;color:#1d4ed8;background:#f7faff}
-.award-toggle.on{color:#92400e;border-color:#f5d98b;background:#fff8e6}
+.award-toggle.on{color:#1d4ed8;border-color:#bfdbfe;background:#eff6ff}
 .award-toggle.static{cursor:default}
-.feedback-chips{margin-top:12px;display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+.feedback-chips{margin:16px 0 4px;display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+.checkin-feedback>button{margin-top:26px}
 .feedback-chip{padding:8px 13px;border:1px solid #bfdbfe;border-radius:11px;display:inline-flex;align-items:center;gap:6px;color:#1d4ed8;background:#eff6ff;font-size:10px;animation:chip-pop .38s cubic-bezier(.34,1.5,.5,1) both}
 .feedback-chip strong{font-size:12px;font-weight:800}
 .feedback-chip.group{color:#3730a3;border-color:#c7d2fe;background:#eef2ff}

@@ -394,6 +394,7 @@ Object.assign(zhCN, {
 });
 /* instructor details, roster sync, completion tracking and range exports */
 Object.assign(en, {
+  currentRoster: "Current roster",
   editEvent: "Edit event", saveChanges: "Save changes", eventUpdated: "Event updated", selectedCount: "selected", selectAllEvents: "Select every event listed",
   instructor: "Instructor", totalHours: "Total hours", deputy: "Deputy contact", hoursUnit: "h",
   registeredCount: "Registered participants", registeredCountHint: "Follows the roster, so it always matches the report KPIs.",
@@ -406,6 +407,7 @@ Object.assign(en, {
   exportCsv: "Download Excel", newEventCta: "New event", backToEvents: "Back to the event list",
 });
 Object.assign(zhTW, {
+  currentRoster: "目前名單",
   editEvent: "編輯活動", saveChanges: "儲存修改", eventUpdated: "活動已更新", selectedCount: "已選取", selectAllEvents: "選取列表中所有活動",
   instructor: "講師", totalHours: "課程總時數", deputy: "代理人", hoursUnit: "小時",
   registeredCount: "參加人數", registeredCountHint: "依名單人數自動計算，與數據報表的應到人數一致。",
@@ -418,6 +420,7 @@ Object.assign(zhTW, {
   exportCsv: "下載 Excel", newEventCta: "新增活動", backToEvents: "返回活動列表",
 });
 Object.assign(zhCN, {
+  currentRoster: "当前名单",
   editEvent: "编辑活动", saveChanges: "保存修改", eventUpdated: "活动已更新", selectedCount: "已选取", selectAllEvents: "选取列表中所有活动",
   instructor: "讲师", totalHours: "课程总时数", deputy: "代理人", hoursUnit: "小时",
   registeredCount: "参加人数", registeredCountHint: "按名单人数自动计算，与数据报表的应到人数一致。",
@@ -430,6 +433,7 @@ Object.assign(zhCN, {
   exportCsv: "下载 Excel", newEventCta: "新增活动", backToEvents: "返回活动列表",
 });
 Object.assign(ja, {
+  currentRoster: "現在の名簿",
   editEvent: "イベントを編集", saveChanges: "変更を保存", eventUpdated: "イベントを更新しました", selectedCount: "件選択", selectAllEvents: "表示中のイベントをすべて選択",
   instructor: "講師", totalHours: "総時間数", deputy: "代理担当者", hoursUnit: "時間",
   registeredCount: "参加人数", registeredCountHint: "名簿の人数から自動計算し、レポートの予定人数と一致します。",

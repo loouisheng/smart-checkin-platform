@@ -118,7 +118,7 @@ function EventForm({ onDone, initialEvent = null, editEvent = null }) {
     : initialEvent
       ? createLmsForm(initialEvent, language)
       : { ...emptyForm, date: todayIso(), modules: { ...defaultModules }, rosterPeople: buildDemoRoster(12, false) });
-  const [rosterMode, setRosterMode] = useState(editEvent ? "upload" : initialEvent ? "lms" : "demo");
+  const [rosterMode, setRosterMode] = useState(editEvent ? "current" : initialEvent ? "lms" : "demo");
   const [fileName, setFileName] = useState("");
   const [error, setError] = useState("");
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
@@ -189,6 +189,8 @@ function EventForm({ onDone, initialEvent = null, editEvent = null }) {
         setFileName={setFileName}
         setError={setError}
         onUseProvided={() => update("rosterPeople", providedRoster(form.grouping))}
+        providedLabel={editEvent ? t("currentRoster") : undefined}
+        providedCount={editEvent ? (rostersByEvent[editEvent.id] || []).length : source === "lms" ? (initialEvent.roster || []).length : 12}
       />
     </section>
 
