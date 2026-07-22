@@ -110,6 +110,8 @@ const filterFixtures = [
 assert.deepEqual(filterEvents(filterFixtures, { query: "leadership" }).map(({ id }) => id), ["E1"]);
 assert.deepEqual(filterEvents(filterFixtures, { date: "2026-08-03" }).map(({ id }) => id), ["E3", "E2"]);
 assert.deepEqual(filterEvents(filterFixtures, { date: "2026-08-03", ownerId: "U-LOUIS" }).map(({ id }) => id), ["E2"]);
+assert.deepEqual(filterEvents(filterFixtures, { dateFrom: "2026-08-01", dateTo: "2026-08-31" }).map(({ id }) => id), ["E3", "E2"], "range filtering backs the batch report export");
+assert.deepEqual(filterEvents(filterFixtures, { dateFrom: "2026-07-01", dateTo: "2026-07-31" }).map(({ id }) => id), ["E1"]);
 assert.deepEqual(filterEvents(filterFixtures, { ownerId: "U-LOUIS" }).map(({ id }) => id), ["E1", "E2"], "cancelled events stay hidden");
 assert.deepEqual(filterEvents(filterFixtures, { module: "survey", ownerId: "U-LOUIS" }).map(({ id }) => id), ["E1"]);
 assert.deepEqual(filterEvents(filterFixtures, { source: "self", category: "digital", status: "upcoming" }).map(({ id }) => id), ["E2"]);
@@ -202,7 +204,7 @@ assert.equal(firstSync.people.every((person) => Boolean(person.group)), true, "n
 assert.equal(fetchLmsRosterUpdate(firstSync.people, true).people.length, baseRoster.length + 4);
 assert.equal(fetchLmsRosterUpdate(firstSync.people, false).people.slice(-1)[0].group, null);
 
-const translationKeys = ["eventCreator", "eventDescription", "groupingToggle", "prizeCount", "prizeQty", "filterDate", "allDates", "modeCheckoutActive", "rosterPreview", "contactExtension", "sendAll", "instructor", "totalHours", "deputy", "completed", "incomplete", "awarded", "rangeExport", "extension", "action"];
+const translationKeys = ["eventCreator", "eventDescription", "groupingToggle", "prizeCount", "prizeQty", "filterDate", "allDates", "modeCheckoutActive", "rosterPreview", "contactExtension", "sendAll", "instructor", "totalHours", "deputy", "completed", "incomplete", "awarded", "rangeExport", "editEvent", "saveChanges", "selectAllEvents", "extension", "action"];
 for (const language of ["zh-TW", "zh-CN", "en", "ja"]) {
   const translate = createTranslator(language);
   for (const key of translationKeys) {

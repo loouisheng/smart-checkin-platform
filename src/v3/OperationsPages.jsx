@@ -1,63 +1,41 @@
-import { useMemo, useState } from "react";
-import { Check, CheckCircle2, FileSpreadsheet, Gift, Info, Sparkles, Trophy, Users } from "lucide-react";
+import { Check, CheckCircle2, Gift, Info, Sparkles, Trophy, Users } from "lucide-react";
 import { useApp } from "./context.jsx";
 import { EventPicker } from "./EventPicker.jsx";
-import { buildAttendanceMatrix, calculateKpis, filterEvents, getEarlyBirdEligible, getRecord, shiftIsoDate, todayIso } from "./domain.js";
-import { currentUser } from "./data.js";
+import { buildAttendanceMatrix, calculateKpis, getEarlyBirdEligible, getRecord, todayIso } from "./domain.js";
 import { formatDate, localize } from "./i18n.js";
 import { AttendanceTable } from "./AttendanceTable.jsx";
 import { downloadWorkbookBundle, safeFileName } from "./xlsx.js";
 import { EmptyState, KpiCards, LoadingButton, PageHeader } from "./Shell.jsx";
 export { SurveyPage } from "./SurveyPage.jsx";
 
-/** Downloads one Excel workbook per event in the chosen date range, named after the event. */
-function RangeExport() {
-  const { events, rostersByEvent, attendanceByEvent, language, t, setNotice } = useApp();
-  const [from, setFrom] = useState(() => shiftIsoDate(todayIso(), -14));
-  const [to, setTo] = useState(todayIso);
-  const [running, setRunning] = useState(false);
-  const invalid = Boolean(from && to && from > to);
-  const matches = useMemo(() => (invalid ? [] : filterEvents(events, { ownerId: currentUser.id }).filter((event) => (!from || event.date >= from) && (!to || event.date <= to))), [events, from, invalid, to]);
-
-  const download = () => {
-    if (!matches.length) return;
-    setRunning(true);
-    const workbooks = matches.map((event) => {
-      const title = localize(event.title, language);
-      return {
-        filename: `${safeFileName(title, event.id)}-${event.date}.xlsx`,
-        sheetName: title,
-        matrix: buildAttendanceMatrix({ event, people: rostersByEvent[event.id] || [], records: attendanceByEvent[event.id] || {}, language, localize, statusLabel: t, label: t }),
-      };
-    });
-    const count = downloadWorkbookBundle(`event-reports-${from}_${to}.zip`, workbooks);
-    setRunning(false);
-    setNotice({ tone: "success", message: `${t("rangeExportDone")} · ${count}` });
-  };
-
-  return <section className="range-export">
-    <div className="range-export-copy"><strong><FileSpreadsheet size={15} />{t("rangeExport")}</strong><p>{t("rangeExportHint")}</p></div>
-    <label><span>{t("rangeFrom")}</span><input type="date" value={from} onChange={(event) => setFrom(event.target.value)} /></label>
-    <label><span>{t("rangeTo")}</span><input type="date" value={to} onChange={(event) => setTo(event.target.value)} /></label>
-    <div className="range-export-action">
-      <span className={matches.length ? "range-count" : "range-count empty"}>{invalid ? t("invalidDateRange") : `${matches.length} ${t("eventsUnit")}`}</span>
-      <LoadingButton className="primary-button" loading={running} disabled={!matches.length || invalid} onClick={download}><FileSpreadsheet size={15} />{t("rangeExport")}</LoadingButton>
-    </div>
-  </section>;
-}
-
 export function ReportsPage() {
-  const { events, rostersByEvent, attendanceByEvent, activeEventId, t } = useApp();
+  const { events, rostersByEvent, attendanceByEvent, activeEventId, language, t, setNotice } = useApp();
   const event = events.find((item) => item.id === activeEventId && item.status !== "cancelled") || null;
   const people = event ? rostersByEvent[event.id] || [] : [];
   const records = event ? attendanceByEvent[event.id] || {} : {};
-  const header = <PageHeader eyebrow="LIVE OPERATIONS" title={t("reportsTitle")} description={t("reportsDesc")} actions={<EventPicker />} />;
-  if (!event) return <div className="page-stack reports-page">{header}<RangeExport /><EmptyState icon={Users} title={t("selectEventPrompt")} /></div>;
+
+  /** One workbook per chosen event, bundled so the browser only sees a single download. */
+  const exportReports = (selection, range) => {
+    if (!selection.length) return;
+    const workbooks = selection.map((item) => {
+      const title = localize(item.title, language);
+      return {
+        filename: `${safeFileName(title, item.id)}-${item.date}.xlsx`,
+        sheetName: title,
+        matrix: buildAttendanceMatrix({ event: item, people: rostersByEvent[item.id] || [], records: attendanceByEvent[item.id] || {}, language, localize, statusLabel: t, label: t }),
+      };
+    });
+    const suffix = [range?.from, range?.to].filter(Boolean).join("_") || todayIso();
+    const count = downloadWorkbookBundle(`event-reports-${suffix}.zip`, workbooks);
+    setNotice({ tone: "success", message: `${t("rangeExportDone")} · ${count}` });
+  };
+
+  const header = <PageHeader eyebrow="LIVE OPERATIONS" title={t("reportsTitle")} description={t("reportsDesc")} actions={<EventPicker onExport={exportReports} />} />;
+  if (!event) return <div className="page-stack reports-page">{header}<EmptyState icon={Users} title={t("selectEventPrompt")} /></div>;
   const kpis = calculateKpis(people, records, event);
   return <div className="page-stack reports-page">{header}
-    <RangeExport />
     <KpiCards values={kpis} />
-    <section className="report-roster-panel"><div className="section-heading roster-section-heading"><div><span>ATTENDANCE ROSTER</span><h2>{t("liveRoster")}</h2></div><small className="completion-rule"><Info size={13} />{t("completionRule")} · {t("totalHours")} {event.totalHours} {t("hoursUnit")}</small></div>
+    <section className="report-roster-panel"><div className="section-heading roster-section-heading"><div><span>ATTENDANCE ROSTER</span><h2>{t("liveRoster")}</h2></div><small className="completion-rule"><Info size={13} />{t("completionRule")}<b>{t("totalHours")} {event.totalHours} {t("hoursUnit")}</b></small></div>
       <AttendanceTable event={event} people={people} records={records} allowLeave />
     </section>
   </div>;

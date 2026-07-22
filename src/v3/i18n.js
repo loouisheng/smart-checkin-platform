@@ -394,6 +394,7 @@ Object.assign(zhCN, {
 });
 /* instructor details, roster sync, completion tracking and range exports */
 Object.assign(en, {
+  editEvent: "Edit event", saveChanges: "Save changes", eventUpdated: "Event updated", selectedCount: "selected", selectAllEvents: "Select every event listed",
   instructor: "Instructor", totalHours: "Total hours", deputy: "Deputy contact", hoursUnit: "h",
   registeredCount: "Registered participants", registeredCountHint: "Follows the roster, so it always matches the report KPIs.",
   refreshRoster: "Sync roster from LMS", rosterSynced: "Roster is up to date", rosterAdded: "new registrations added", rosterSyncedAt: "Last synced",
@@ -405,6 +406,7 @@ Object.assign(en, {
   exportCsv: "Download Excel", newEventCta: "New event", backToEvents: "Back to the event list",
 });
 Object.assign(zhTW, {
+  editEvent: "編輯活動", saveChanges: "儲存修改", eventUpdated: "活動已更新", selectedCount: "已選取", selectAllEvents: "選取列表中所有活動",
   instructor: "講師", totalHours: "課程總時數", deputy: "代理人", hoursUnit: "小時",
   registeredCount: "參加人數", registeredCountHint: "依名單人數自動計算，與數據報表的應到人數一致。",
   refreshRoster: "從 LMS 更新名單", rosterSynced: "名單已是最新", rosterAdded: "位新報名者", rosterSyncedAt: "最後更新",
@@ -416,6 +418,7 @@ Object.assign(zhTW, {
   exportCsv: "下載 Excel", newEventCta: "新增活動", backToEvents: "返回活動列表",
 });
 Object.assign(zhCN, {
+  editEvent: "编辑活动", saveChanges: "保存修改", eventUpdated: "活动已更新", selectedCount: "已选取", selectAllEvents: "选取列表中所有活动",
   instructor: "讲师", totalHours: "课程总时数", deputy: "代理人", hoursUnit: "小时",
   registeredCount: "参加人数", registeredCountHint: "按名单人数自动计算，与数据报表的应到人数一致。",
   refreshRoster: "从 LMS 更新名单", rosterSynced: "名单已是最新", rosterAdded: "位新报名者", rosterSyncedAt: "最后更新",
@@ -427,6 +430,7 @@ Object.assign(zhCN, {
   exportCsv: "下载 Excel", newEventCta: "新增活动", backToEvents: "返回活动列表",
 });
 Object.assign(ja, {
+  editEvent: "イベントを編集", saveChanges: "変更を保存", eventUpdated: "イベントを更新しました", selectedCount: "件選択", selectAllEvents: "表示中のイベントをすべて選択",
   instructor: "講師", totalHours: "総時間数", deputy: "代理担当者", hoursUnit: "時間",
   registeredCount: "参加人数", registeredCountHint: "名簿の人数から自動計算し、レポートの予定人数と一致します。",
   refreshRoster: "LMS から名簿を更新", rosterSynced: "名簿は最新です", rosterAdded: "名の新規申込", rosterSyncedAt: "最終更新",

@@ -154,6 +154,42 @@ export function AppProvider({ children }) {
     return event;
   }, [t]);
 
+  /** Edits an event that already exists, keeping its identity, history and source. */
+  const updateEvent = useCallback((eventId, form) => {
+    const existing = allEvents.find((item) => item.id === eventId);
+    if (!existing) return null;
+    const makeLocalized = (value) => ({ "zh-TW": value, "zh-CN": value, en: value, ja: value });
+    const grouped = Boolean(form.grouping);
+    const people = applyRosterGrouping(form.rosterPeople || [], grouped);
+    const isLms = existing.source === "lms";
+    const updated = normalizeEvent({
+      ...existing,
+      title: isLms ? existing.title : makeLocalized(form.title),
+      description: isLms ? existing.description : makeLocalized(form.description || ""),
+      location: isLms ? existing.location : makeLocalized(form.location),
+      date: isLms ? existing.date : form.date,
+      startTime: isLms ? existing.startTime : form.startTime,
+      endTime: isLms ? existing.endTime : form.endTime,
+      category: isLms ? existing.category : form.category,
+      learningMode: isLms ? existing.learningMode : form.learningMode,
+      instructor: isLms ? existing.instructor : makeLocalized(form.instructor),
+      deputy: isLms ? existing.deputy : makeLocalized(form.deputy),
+      totalHours: isLms ? existing.totalHours : Number(form.totalHours) || 0,
+      capacity: people.length,
+      grouping: { enabled: grouped },
+      modules: { ...form.modules },
+      survey: form.modules.survey ? { url: form.surveyUrl } : null,
+      earlyBird: form.modules.earlyBird ? { quota: Number(form.earlyQuota), reward: makeLocalized(form.earlyReward) } : null,
+      lottery: form.modules.lottery
+        ? { prizes: form.prizes.filter((prize) => String(prize.name).trim()).map((prize, index) => ({ id: `p${index + 1}`, name: makeLocalized(prize.name), quantity: Number(prize.quantity) })) }
+        : null,
+    });
+    setAllEvents((current) => current.map((item) => item.id === eventId ? updated : item));
+    setRostersByEvent((current) => ({ ...current, [eventId]: people }));
+    setNotice({ tone: "success", message: t("eventUpdated") });
+    return updated;
+  }, [allEvents, t]);
+
   const cancelEvent = useCallback((eventId, reason) => {
     if (!reason.trim()) return false;
     setAllEvents((current) => current.map((event) => event.id === eventId
@@ -209,7 +245,7 @@ export function AppProvider({ children }) {
   const value = {
     language, setLanguage, t, localize, page, navigate, events, rostersByEvent, attendanceByEvent, deliveries, lotteryResults,
     activeEventId, activeEvent, activePeople, activeRecords, selectActiveEvent, checkinEventId, openCheckin, closeCheckin,
-    recentActivity, recordAttendance, toggleLeave, toggleAward, refreshLmsRoster, saveEvent, cancelEvent, sendDelivery, runLottery,
+    recentActivity, recordAttendance, toggleLeave, toggleAward, refreshLmsRoster, saveEvent, updateEvent, cancelEvent, sendDelivery, runLottery,
     lmsCatalog, currentUser, notice, setNotice, busy,
   };
 

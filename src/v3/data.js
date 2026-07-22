@@ -169,14 +169,8 @@ const liveEvent = events[0];
 const completedEvent = events[3];
 
 export const initialAttendance = {
-  [liveEvent.id]: {
-    T001: { checkin: { at: `${liveEvent.date}T09:01:00+08:00`, method: "card", operator: "Front Desk A" }, checkout: null, leave: false, audit: [] },
-    T002: { checkin: { at: `${liveEvent.date}T09:04:00+08:00`, method: "card", operator: "Front Desk A" }, checkout: null, leave: false, audit: [] },
-    T003: { checkin: { at: `${liveEvent.date}T09:18:00+08:00`, method: "manual", operator: "Louis Chen" }, checkout: null, leave: false, audit: [] },
-    T004: { checkin: { at: `${liveEvent.date}T09:06:00+08:00`, method: "card", operator: "Front Desk A" }, checkout: null, leave: false, audit: [] },
-    T005: { checkin: { at: `${liveEvent.date}T09:12:00+08:00`, method: "card", operator: "Front Desk A" }, checkout: null, leave: false, audit: [] },
-    T009: { checkin: null, checkout: null, leave: true, leaveSource: "lms", audit: [] },
-  },
+  // Today's event starts with nobody checked in, so a demo can run the whole flow live.
+  [liveEvent.id]: {},
   // The last two left early, so they fall under the 80% completion threshold.
   [completedEvent.id]: Object.fromEntries(roster.slice(0, 9).map((person, index) => [person.id, {
     checkin: { at: `${completedEvent.date}T13:${String(31 + index).padStart(2, "0")}:00+08:00`, method: index % 2 ? "manual" : "card" },

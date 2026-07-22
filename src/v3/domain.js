@@ -22,7 +22,7 @@ export function shiftIsoDate(iso, days) {
 }
 
 export function filterEvents(events, filters = {}) {
-  const { query = "", source = "all", category = "all", status = "all", learningMode = "all", date = "", module, ownerId } = filters;
+  const { query = "", source = "all", category = "all", status = "all", learningMode = "all", date = "", dateFrom = "", dateTo = "", module, ownerId } = filters;
   const needle = query.trim().toLowerCase();
   const filtered = (events || []).filter((event) => {
     if (event.status === "cancelled") return false;
@@ -33,6 +33,8 @@ export function filterEvents(events, filters = {}) {
     if (status !== "all" && status && event.status !== status) return false;
     if (learningMode !== "all" && learningMode && event.learningMode !== learningMode) return false;
     if (date && event.date !== date) return false;
+    if (dateFrom && event.date < dateFrom) return false;
+    if (dateTo && event.date > dateTo) return false;
     if (module && !event.modules?.[module]) return false;
     return true;
   });

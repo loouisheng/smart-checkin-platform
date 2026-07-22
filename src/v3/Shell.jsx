@@ -1,4 +1,5 @@
 import { Component, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   BarChart3, Bell, CalendarDays, Check, ChevronDown, ClipboardList as ClipboardClock, Gift, Globe2,
   Languages, Menu, ScanLine, Sparkles, X,
@@ -92,15 +93,17 @@ export function Notice() {
   return <div className={"notice " + (notice.tone || "info")} role="status"><span>{notice.message}</span><button type="button" onClick={() => setNotice(null)}><X size={16} /></button></div>;
 }
 
-export function Modal({ open, title, children, onClose, actions }) {
+export function Modal({ open, title, children, onClose, actions, wide = false }) {
   if (!open) return null;
-  return <div className="modal-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose?.()}>
-    <section className="modal" role="dialog" aria-modal="true" aria-label={title}>
+  // Rendered through a portal: the page transition animates a transform, which would
+  // otherwise make this fixed overlay resolve against the page instead of the viewport.
+  return createPortal(<div className="modal-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose?.()}>
+    <section className={wide ? "modal wide" : "modal"} role="dialog" aria-modal="true" aria-label={title}>
       <header><h2>{title}</h2><button type="button" onClick={onClose} aria-label="Close"><X size={18} /></button></header>
       <div className="modal-body">{children}</div>
       {actions && <footer>{actions}</footer>}
     </section>
-  </div>;
+  </div>, document.body);
 }
 
 export function EmptyState({ icon: Icon = Globe2, title, description }) {

@@ -50,8 +50,9 @@ export function AttendanceTable({ event, people, records, allowLeave = false, co
       <thead><tr>
         <th>{t("name")}</th><th>{t("department")}</th><th>{t("group")}</th><th>{t("attendance")}</th>
         <th>{t("checkinAt")}</th><th>{t("checkoutAt")}</th><th>{t("attendedHours")}</th>
-        <th>{t("awardStatus")}</th><th className="center">{t("teams")}</th><th>{t("extension")}</th>
+        <th className="center">{t("teams")}</th><th>{t("extension")}</th>
         {allowLeave && <th>{t("action")}</th>}
+        <th>{t("awardStatus")}</th>
       </tr></thead>
       <tbody>{rows.map(({ person, record, status: personStatus, completion }) => <tr key={person.id}>
         <td><strong>{localize(person.name, language)}</strong><small>{person.id}</small></td>
@@ -60,12 +61,12 @@ export function AttendanceTable({ event, people, records, allowLeave = false, co
         <td>{record.checkin ? formatDate(record.checkin.at, language) : "—"}</td>
         <td>{record.checkout ? formatDate(record.checkout.at, language) : "—"}</td>
         <td>{record.checkout ? <span className="hours-cell">{completion.attendedHours}<small> / {completion.requiredHours} {t("hoursUnit")}</small></span> : "—"}</td>
-        <td>{allowLeave
-          ? <button className={record.awarded ? "award-toggle on" : "award-toggle"} type="button" aria-pressed={Boolean(record.awarded)} title={record.awarded ? t("clearAward") : t("markAward")} onClick={() => toggleAward(event.id, person.id, !record.awarded)}><Trophy size={13} />{record.awarded ? t("awarded") : t("notAwarded")}</button>
-          : <span className={record.awarded ? "award-toggle on static" : "award-toggle static"}><Trophy size={13} />{record.awarded ? t("awarded") : t("notAwarded")}</span>}</td>
         <td className="center">{person.teamsUrl ? <a className="teams-link" href={person.teamsUrl} target="_blank" rel="noreferrer" aria-label={`Teams: ${localize(person.name, language)}`}><MessageCircle size={17} /></a> : <button className="teams-link disabled" type="button" disabled title={t("teamsUnavailable")}><MessageCircle size={17} /></button>}</td>
         <td>{person.extension || "—"}</td>
         {allowLeave && <td><button className="table-action" type="button" onClick={() => toggleLeave(event.id, person.id, personStatus !== "leave")}>{personStatus === "leave" ? t("clearLeave") : t("markLeave")}</button></td>}
+        <td>{allowLeave
+          ? <button className={record.awarded ? "award-toggle on" : "award-toggle"} type="button" aria-pressed={Boolean(record.awarded)} title={record.awarded ? t("clearAward") : t("markAward")} onClick={() => toggleAward(event.id, person.id, !record.awarded)}><Trophy size={13} />{record.awarded ? t("awarded") : t("notAwarded")}</button>
+          : <span className={record.awarded ? "award-toggle on static" : "award-toggle static"}><Trophy size={13} />{record.awarded ? t("awarded") : t("notAwarded")}</span>}</td>
       </tr>)}</tbody>
     </table></div>}
   </section>;

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import {
-  ArrowLeft, CalendarPlus, Check, ClipboardList as ClipboardClock, Eye, Filter, Gift, GraduationCap, Info, LockKeyhole, Plus,
-  RefreshCw, Search, Sparkles, Trash2,
+  ArrowLeft, CalendarPlus, Check, ClipboardList as ClipboardClock, Eye, Filter, Gift, GraduationCap, Info, LockKeyhole, Pencil,
+  Plus, RefreshCw, Search, Sparkles, Trash2,
 } from "lucide-react";
 import { useApp } from "./context.jsx";
 import { filterEvents, hoursBetween, resizePrizeList, todayIso, validateRosterGrouping } from "./domain.js";
@@ -80,19 +80,54 @@ function PrizeEditor({ prizes, onChange, t }) {
   </div>;
 }
 
-function EventForm({ onDone, initialEvent = null }) {
-  const { language, t, saveEvent } = useApp();
-  const source = initialEvent ? "lms" : "self";
-  const [form, setForm] = useState(() => initialEvent
-    ? createLmsForm(initialEvent, language)
-    : { ...emptyForm, date: todayIso(), modules: { ...defaultModules }, rosterPeople: buildDemoRoster(12, false) });
-  const [rosterMode, setRosterMode] = useState(initialEvent ? "lms" : "demo");
+function createEditForm(event, people, language) {
+  return {
+    ...emptyForm,
+    title: localize(event.title, language),
+    description: localize(event.description, language),
+    date: event.date,
+    startTime: event.startTime,
+    endTime: event.endTime,
+    location: localize(event.location, language),
+    instructor: localize(event.instructor, language),
+    deputy: localize(event.deputy, language),
+    totalHours: event.totalHours,
+    hoursAuto: false,
+    category: event.category,
+    learningMode: event.learningMode,
+    grouping: Boolean(event.grouping?.enabled),
+    rosterPeople: people.map((person) => ({ ...person })),
+    modules: { ...defaultModules, ...event.modules },
+    surveyUrl: event.survey?.url || "",
+    earlyQuota: event.earlyBird?.quota || 5,
+    earlyReward: localize(event.earlyBird?.reward, language) === "—" ? "" : localize(event.earlyBird?.reward, language),
+    prizes: event.lottery?.prizes?.length
+      ? event.lottery.prizes.map((prize) => ({ name: localize(prize.name, language), quantity: prize.quantity }))
+      : [{ name: "", quantity: 1 }],
+    source: event.source,
+    lmsId: event.lmsId || null,
+    catalogId: null,
+  };
+}
+
+function EventForm({ onDone, initialEvent = null, editEvent = null }) {
+  const { language, t, saveEvent, updateEvent, rostersByEvent } = useApp();
+  const source = editEvent ? editEvent.source : initialEvent ? "lms" : "self";
+  const [form, setForm] = useState(() => editEvent
+    ? createEditForm(editEvent, rostersByEvent[editEvent.id] || [], language)
+    : initialEvent
+      ? createLmsForm(initialEvent, language)
+      : { ...emptyForm, date: todayIso(), modules: { ...defaultModules }, rosterPeople: buildDemoRoster(12, false) });
+  const [rosterMode, setRosterMode] = useState(editEvent ? "upload" : initialEvent ? "lms" : "demo");
   const [fileName, setFileName] = useState("");
   const [error, setError] = useState("");
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
   const toggleModule = (key) => setForm((current) => ({ ...current, modules: { ...current.modules, [key]: !current.modules[key] } }));
 
-  const providedRoster = (grouped) => (source === "lms" ? (initialEvent.roster || []).map((person) => ({ ...person })) : buildDemoRoster(12, grouped));
+  const providedRoster = (grouped) => {
+    if (editEvent) return (rostersByEvent[editEvent.id] || []).map((person) => ({ ...person }));
+    return source === "lms" ? (initialEvent.roster || []).map((person) => ({ ...person })) : buildDemoRoster(12, grouped);
+  };
 
   const toggleGrouping = (next) => {
     setError("");
@@ -114,8 +149,9 @@ function EventForm({ onDone, initialEvent = null }) {
     if (!form.rosterPeople.length) return setError(t("rosterEmpty"));
     if (!validateRosterGrouping(form.rosterPeople, form.grouping).ok) return setError(t("rosterGroupMissing"));
     if (form.modules.survey && !form.surveyUrl.trim()) return setError(t("missingLink"));
-    if (form.modules.lottery && !form.prizes.every((prize) => prize.name.trim() && Number(prize.quantity) >= 1)) return setError(t("prizeRequired"));
-    saveEvent({ ...form, source });
+    if (form.modules.lottery && !form.prizes.every((prize) => String(prize.name).trim() && Number(prize.quantity) >= 1)) return setError(t("prizeRequired"));
+    if (editEvent) updateEvent(editEvent.id, form);
+    else saveEvent({ ...form, source });
     onDone();
   };
 
@@ -167,7 +203,10 @@ function EventForm({ onDone, initialEvent = null }) {
       </div>
     </section>
     {error && <p className="form-error">{error}</p>}
-    <div className="form-actions"><button className="primary-button" type="submit"><Check size={16} />{t("createEvent")}</button></div>
+    <div className="form-actions">
+      {editEvent && <button className="secondary-button" type="button" onClick={onDone}>{t("cancel")}</button>}
+      <button className="primary-button" type="submit"><Check size={16} />{editEvent ? t("saveChanges") : t("createEvent")}</button>
+    </div>
   </form>;
 }
 
@@ -223,7 +262,7 @@ function EventDetails({ event }) {
   </div>;
 }
 
-function ManagedEvents() {
+function ManagedEvents({ onEdit }) {
   const { events, language, t, cancelEvent, refreshLmsRoster, rostersByEvent, busy, setNotice } = useApp();
   const [syncingId, setSyncingId] = useState(null);
   const [filters, setFilters] = useState(createEventFilters);
@@ -269,12 +308,13 @@ function ManagedEvents() {
       </div>
       <div className="managed-actions">
         {event.source === "lms" && <LoadingButton className="secondary-button" loading={syncingId === event.id} disabled={busy} onClick={() => syncRoster(event.id)}><RefreshCw size={14} />{t("refreshRoster")}</LoadingButton>}
+        <button className="secondary-button" type="button" onClick={() => onEdit(event)}><Pencil size={14} />{t("editEvent")}</button>
         <button className="secondary-button" type="button" onClick={() => setDetailTarget(event)}><Eye size={14} />{t("viewEvent")}</button>
         <button className="danger-button" type="button" onClick={() => setCancelTarget(event)}><Trash2 size={14} />{t("cancelEvent")}</button>
       </div>
     </article>) : <EmptyState title={t("empty")} />}</div>
 
-    <Modal open={Boolean(detailTarget)} title={t("viewEvent")} onClose={() => setDetailTarget(null)} actions={<button className="primary-button" type="button" onClick={() => setDetailTarget(null)}>{t("close")}</button>}>
+    <Modal open={Boolean(detailTarget)} title={t("viewEvent")} wide onClose={() => setDetailTarget(null)} actions={<button className="primary-button" type="button" onClick={() => setDetailTarget(null)}>{t("close")}</button>}>
       <EventDetails event={detailTarget} />
     </Modal>
 
@@ -288,15 +328,17 @@ export default function EventManagementPage() {
   const { t } = useApp();
   const [creationMode, setCreationMode] = useState(null);
   const [lmsDraft, setLmsDraft] = useState(null);
-  const creating = creationMode !== null;
-  const done = () => { setCreationMode(null); setLmsDraft(null); };
+  const [editTarget, setEditTarget] = useState(null);
+  const busyWithForm = creationMode !== null || editTarget !== null;
+  const done = () => { setCreationMode(null); setLmsDraft(null); setEditTarget(null); };
 
   return <div className="page-stack">
     <PageHeader eyebrow="EVENT MANAGEMENT" title={t("eventsTitle")} description={t("eventsDesc")}
-      actions={creating
+      actions={busyWithForm
         ? <button className="secondary-button" type="button" onClick={done}><ArrowLeft size={15} />{t("backToEvents")}</button>
         : <button className="primary-button" type="button" onClick={() => setCreationMode("choose")}><CalendarPlus size={16} />{t("newEventCta")}</button>} />
-    {!creating ? <ManagedEvents />
+    {editTarget ? <EventForm onDone={done} editEvent={editTarget} />
+      : !creationMode ? <ManagedEvents onEdit={setEditTarget} />
       : creationMode === "self" ? <EventForm onDone={done} />
       : creationMode === "lms" && !lmsDraft ? <LmsCatalog onSelect={(event) => setLmsDraft(event)} />
       : creationMode === "lms" && lmsDraft ? <EventForm onDone={done} initialEvent={lmsDraft} />
