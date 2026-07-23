@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import {
-  ArrowLeft, CalendarPlus, Check, ClipboardList as ClipboardClock, Eye, Filter, Gift, GraduationCap, Info, LockKeyhole, Pencil,
+  ArrowLeft, CalendarPlus, Check, ClipboardList as ClipboardClock, Eye, Filter, Gift, GraduationCap, LockKeyhole, Pencil,
   Plus, RefreshCw, Search, Sparkles, Trash2,
 } from "lucide-react";
 import { useApp } from "./context.jsx";
@@ -21,38 +21,6 @@ const emptyForm = {
   modules: defaultModules, surveyUrl: "", earlyQuota: 5, earlyReward: "",
   prizes: [{ name: "", quantity: 1 }], source: "self", lmsId: null, catalogId: null,
 };
-
-function createLmsForm(event, language) {
-  return {
-    ...emptyForm,
-    title: localize(event.title, language),
-    description: localize(event.description, language),
-    date: event.date,
-    startTime: event.startTime,
-    endTime: event.endTime,
-    location: localize(event.location, language),
-    instructor: localize(event.instructor, language),
-    deputy: localize(event.deputy, language),
-    totalHours: event.totalHours,
-    hoursAuto: false,
-    category: event.category,
-    learningMode: event.learningMode,
-    grouping: Boolean(event.grouping?.enabled),
-    rosterPeople: (event.roster || []).map((person) => ({ ...person })),
-    modules: { ...defaultModules },
-    source: "lms",
-    lmsId: event.lmsId,
-    catalogId: event.id,
-  };
-}
-
-function EntryCards({ onChoose }) {
-  const { t } = useApp();
-  return <div className="entry-cards">
-    <button type="button" onClick={() => onChoose("self")}><span><CalendarPlus size={25} /></span><div><h2>{t("selfEvent")}</h2><p>{t("selfEventDesc")}</p></div><i>01</i></button>
-    <button type="button" onClick={() => onChoose("lms")}><span><GraduationCap size={25} /></span><div><h2>{t("lmsEvent")}</h2><p>{t("lmsEventDesc")}</p></div><i>02</i></button>
-  </div>;
-}
 
 function GroupingToggle({ enabled, onToggle, t }) {
   return <div className="grouping-toggle wide">
@@ -110,15 +78,14 @@ function createEditForm(event, people, language) {
   };
 }
 
-function EventForm({ onDone, initialEvent = null, editEvent = null }) {
+function EventForm({ onDone, editEvent = null }) {
   const { language, t, saveEvent, updateEvent, rostersByEvent } = useApp();
-  const source = editEvent ? editEvent.source : initialEvent ? "lms" : "self";
+  // LMS events are synced automatically, so the form only creates self events; editing keeps the source.
+  const source = editEvent ? editEvent.source : "self";
   const [form, setForm] = useState(() => editEvent
     ? createEditForm(editEvent, rostersByEvent[editEvent.id] || [], language)
-    : initialEvent
-      ? createLmsForm(initialEvent, language)
-      : { ...emptyForm, date: todayIso(), modules: { ...defaultModules }, rosterPeople: buildDemoRoster(12, false) });
-  const [rosterMode, setRosterMode] = useState(editEvent ? "current" : initialEvent ? "lms" : "demo");
+    : { ...emptyForm, date: todayIso(), modules: { ...defaultModules }, rosterPeople: buildDemoRoster(12, false) });
+  const [rosterMode, setRosterMode] = useState(editEvent ? "current" : "demo");
   const [fileName, setFileName] = useState("");
   const [error, setError] = useState("");
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
@@ -126,7 +93,7 @@ function EventForm({ onDone, initialEvent = null, editEvent = null }) {
 
   const providedRoster = (grouped) => {
     if (editEvent) return (rostersByEvent[editEvent.id] || []).map((person) => ({ ...person }));
-    return source === "lms" ? (initialEvent.roster || []).map((person) => ({ ...person })) : buildDemoRoster(12, grouped);
+    return buildDemoRoster(12, grouped);
   };
 
   const toggleGrouping = (next) => {
@@ -190,7 +157,7 @@ function EventForm({ onDone, initialEvent = null, editEvent = null }) {
         setError={setError}
         onUseProvided={() => update("rosterPeople", providedRoster(form.grouping))}
         providedLabel={editEvent ? t("currentRoster") : undefined}
-        providedCount={editEvent ? (rostersByEvent[editEvent.id] || []).length : source === "lms" ? (initialEvent.roster || []).length : 12}
+        providedCount={editEvent ? (rostersByEvent[editEvent.id] || []).length : 12}
       />
     </section>
 
@@ -210,34 +177,6 @@ function EventForm({ onDone, initialEvent = null, editEvent = null }) {
       <button className="primary-button" type="submit"><Check size={16} />{editEvent ? t("saveChanges") : t("createEvent")}</button>
     </div>
   </form>;
-}
-
-function LmsCatalog({ onSelect }) {
-  const { lmsCatalog, events, language, t } = useApp();
-  const [filters, setFilters] = useState(() => createEventFilters({ date: "" }));
-  const [selectedId, setSelectedId] = useState(lmsCatalog[0]?.id);
-  const update = (key, value) => setFilters((current) => ({ ...current, [key]: value }));
-  const filtered = useMemo(() => filterEvents(lmsCatalog, filters), [filters, lmsCatalog]);
-  const selected = lmsCatalog.find((event) => event.id === selectedId);
-  const alreadyImported = selected && events.some((event) => event.lmsId === selected.lmsId && event.status !== "cancelled");
-
-  return <div className="lms-browser">
-    <div className="lms-searchbar">
-      <label className="search-field wide"><Search size={17} /><input value={filters.query} onChange={(event) => update("query", event.target.value)} placeholder={t("searchEvent")} /></label>
-      <select value={filters.category} onChange={(event) => update("category", event.target.value)}><option value="all">{t("allTypes")}</option>{Object.keys(categoryLabels).map((value) => <option key={value} value={value}>{localize(categoryLabels[value], language)}</option>)}</select>
-      <select value={filters.learningMode} onChange={(event) => update("learningMode", event.target.value)}><option value="all">{t("learningMode")}</option>{Object.keys(modeLabels).map((value) => <option key={value} value={value}>{localize(modeLabels[value], language)}</option>)}</select>
-      <EventDateFilter value={filters.date} onChange={(value) => update("date", value)} />
-    </div>
-    <div className="lms-layout"><section className="lms-results">{filtered.length ? filtered.map((event) => <button key={event.id} type="button" className={event.id === selectedId ? "selected" : ""} onClick={() => setSelectedId(event.id)}>
-      <span><GraduationCap size={18} /></span><div><strong>{localize(event.title, language)}</strong><small>{event.date} · {localize(categoryLabels[event.category], language)} · {localize(modeLabels[event.learningMode], language)}</small></div>
-    </button>) : <EmptyState title={t("empty")} />}</section>
-      <aside className="lms-preview">{selected && <>
-        <span className="readonly-label"><Info size={14} />{t("lmsSelectHint")}</span><h2>{localize(selected.title, language)}</h2><EventMeta event={selected} />
-        <div className="lms-module-summary"><strong>{t("lmsProvidedInfo")}</strong><span><Check size={13} />{t("basicInfo")}</span><span><Check size={13} />{t("rosterTitle")} · {(selected.roster || []).length} {t("peopleUnit")}</span></div>
-        <button className="primary-button full" type="button" disabled={alreadyImported} onClick={() => onSelect(selected)}>{alreadyImported ? t("alreadyManaged") : t("createEvent")}</button>
-      </>}</aside>
-    </div>
-  </div>;
 }
 
 function EventDetails({ event }) {
@@ -328,22 +267,19 @@ function ManagedEvents({ onEdit }) {
 
 export default function EventManagementPage() {
   const { t } = useApp();
-  const [creationMode, setCreationMode] = useState(null);
-  const [lmsDraft, setLmsDraft] = useState(null);
+  // New events go straight to the self-create form; LMS events arrive through the sync, not here.
+  const [creating, setCreating] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
-  const busyWithForm = creationMode !== null || editTarget !== null;
-  const done = () => { setCreationMode(null); setLmsDraft(null); setEditTarget(null); };
+  const busyWithForm = creating || editTarget !== null;
+  const done = () => { setCreating(false); setEditTarget(null); };
 
   return <div className="page-stack">
     <PageHeader eyebrow="EVENT MANAGEMENT" title={t("eventsTitle")} description={t("eventsDesc")}
       actions={busyWithForm
         ? <button className="secondary-button" type="button" onClick={done}><ArrowLeft size={15} />{t("backToEvents")}</button>
-        : <button className="primary-button" type="button" onClick={() => setCreationMode("choose")}><CalendarPlus size={16} />{t("newEventCta")}</button>} />
+        : <button className="primary-button" type="button" onClick={() => setCreating(true)}><CalendarPlus size={16} />{t("newEventCta")}</button>} />
     {editTarget ? <EventForm onDone={done} editEvent={editTarget} />
-      : !creationMode ? <ManagedEvents onEdit={setEditTarget} />
-      : creationMode === "self" ? <EventForm onDone={done} />
-      : creationMode === "lms" && !lmsDraft ? <LmsCatalog onSelect={(event) => setLmsDraft(event)} />
-      : creationMode === "lms" && lmsDraft ? <EventForm onDone={done} initialEvent={lmsDraft} />
-      : <EntryCards onChoose={setCreationMode} />}
+      : creating ? <EventForm onDone={done} />
+      : <ManagedEvents onEdit={setEditTarget} />}
   </div>;
 }

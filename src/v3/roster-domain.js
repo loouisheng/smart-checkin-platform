@@ -65,8 +65,8 @@ export const rosterColumns = ["employee_id", "name", "department", "email", "tea
 export function buildRosterTemplate(withGroup = false) {
   const headers = [...rosterColumns, ...(withGroup ? ["group"] : [])];
   const rows = [
-    ["T001", "Alice Chen", "People", "alice.chen@example.com", "https://teams.microsoft.com/l/chat/0/0?users=alice.chen@example.com", "2181", "A"],
-    ["T002", "Brian Lin", "Product", "brian.lin@example.com", "https://teams.microsoft.com/l/chat/0/0?users=brian.lin@example.com", "2264", "B"],
+    ["181201", "Alice Chen", "People", "alice.chen@example.com", "https://teams.microsoft.com/l/chat/0/0?users=alice.chen@example.com", "2181", "A"],
+    ["181202", "Brian Lin", "Product", "brian.lin@example.com", "https://teams.microsoft.com/l/chat/0/0?users=brian.lin@example.com", "2264", "B"],
   ].map((row) => (withGroup ? row : row.slice(0, rosterColumns.length)));
   return `\uFEFF${[headers, ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n")}`;
 }

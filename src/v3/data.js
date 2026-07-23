@@ -15,18 +15,18 @@ const today = todayIso();
 const day = (offset) => shiftIsoDate(today, offset);
 
 const peopleSeed = [
-  ["T001", "陳怡君", "陈怡君", "Alice Chen", "人力資源", "人力资源", "People", "2181"],
-  ["T002", "林柏宇", "林柏宇", "Brian Lin", "產品部", "产品部", "Product", "2264"],
-  ["T003", "吳佳穎", "吴佳颖", "Cathy Wu", "業務部", "业务部", "Sales", "2317"],
-  ["T004", "高志明", "高志明", "Daniel Kao", "工程部", "工程部", "Engineering", "2406"],
-  ["T005", "黃雅婷", "黄雅婷", "Eva Huang", "財務部", "财务部", "Finance", "2355"],
-  ["T006", "蔡承翰", "蔡承翰", "Frank Tsai", "行銷部", "市场部", "Marketing", "2249"],
-  ["T007", "李欣怡", "李欣怡", "Grace Li", "法務部", "法务部", "Legal", "2193"],
-  ["T008", "王俊傑", "王俊杰", "Jason Wang", "資訊部", "信息部", "IT", "2451"],
-  ["T009", "張語涵", "张语涵", "Iris Chang", "設計部", "设计部", "Design", "2328"],
-  ["T010", "周冠廷", "周冠廷", "Kevin Chou", "採購部", "采购部", "Procurement", "2216"],
-  ["T011", "徐婉婷", "徐婉婷", "Mina Hsu", "營運部", "运营部", "Operations", "2287"],
-  ["T012", "鄭凱文", "郑凯文", "Oscar Cheng", "學習發展", "学习发展", "L&D", "2298"],
+  ["181201", "陳怡君", "陈怡君", "Alice Chen", "人力資源", "人力资源", "People", "2181"],
+  ["181202", "林柏宇", "林柏宇", "Brian Lin", "產品部", "产品部", "Product", "2264"],
+  ["181203", "吳佳穎", "吴佳颖", "Cathy Wu", "業務部", "业务部", "Sales", "2317"],
+  ["181204", "高志明", "高志明", "Daniel Kao", "工程部", "工程部", "Engineering", "2406"],
+  ["181205", "黃雅婷", "黄雅婷", "Eva Huang", "財務部", "财务部", "Finance", "2355"],
+  ["181206", "蔡承翰", "蔡承翰", "Frank Tsai", "行銷部", "市场部", "Marketing", "2249"],
+  ["181207", "李欣怡", "李欣怡", "Grace Li", "法務部", "法务部", "Legal", "2193"],
+  ["181208", "王俊傑", "王俊杰", "Jason Wang", "資訊部", "信息部", "IT", "2451"],
+  ["181209", "張語涵", "张语涵", "Iris Chang", "設計部", "设计部", "Design", "2328"],
+  ["181210", "周冠廷", "周冠廷", "Kevin Chou", "採購部", "采购部", "Procurement", "2216"],
+  ["181211", "徐婉婷", "徐婉婷", "Mina Hsu", "營運部", "运营部", "Operations", "2287"],
+  ["181212", "鄭凱文", "郑凯文", "Oscar Cheng", "學習發展", "学习发展", "L&D", "2298"],
 ];
 
 export const roster = peopleSeed.map(([id, tw, cn, en, deptTw, deptCn, deptEn, extension], index) => {
@@ -45,12 +45,12 @@ export function buildDemoRoster(count = 12, grouped = false) {
 
 // People who register after an event is created; the LMS roster refresh pulls them in.
 const lateRegistrantSeed = [
-  ["T013", "許雅琪", "许雅琪", "Penny Hsu", "客服中心", "客服中心", "Customer Care", "2374"],
-  ["T014", "劉建志", "刘建志", "Roger Liu", "製造部", "制造部", "Manufacturing", "2411"],
-  ["T015", "楊淑芳", "杨淑芳", "Sandy Yang", "品保部", "品保部", "Quality", "2265"],
-  ["T016", "簡宏毅", "简宏毅", "Tony Chien", "研發中心", "研发中心", "R&D", "2503"],
-  ["T017", "馮怡如", "冯怡如", "Vicky Feng", "公關部", "公关部", "Public Relations", "2158"],
-  ["T018", "宋柏翰", "宋柏翰", "Wayne Sung", "稽核室", "稽核室", "Audit", "2092"],
+  ["181213", "許雅琪", "许雅琪", "Penny Hsu", "客服中心", "客服中心", "Customer Care", "2374"],
+  ["181214", "劉建志", "刘建志", "Roger Liu", "製造部", "制造部", "Manufacturing", "2411"],
+  ["181215", "楊淑芳", "杨淑芳", "Sandy Yang", "品保部", "品保部", "Quality", "2265"],
+  ["181216", "簡宏毅", "简宏毅", "Tony Chien", "研發中心", "研发中心", "R&D", "2503"],
+  ["181217", "馮怡如", "冯怡如", "Vicky Feng", "公關部", "公关部", "Public Relations", "2158"],
+  ["181218", "宋柏翰", "宋柏翰", "Wayne Sung", "稽核室", "稽核室", "Audit", "2092"],
 ];
 
 export const lateRegistrants = lateRegistrantSeed.map(([id, tw, cn, en, deptTw, deptCn, deptEn, extension]) => {
